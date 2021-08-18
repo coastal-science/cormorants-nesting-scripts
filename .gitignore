@@ -1,0 +1,10 @@
+# Images
+*.jpg
+*.png
+*.tif
+
+# Python Artifacts
+.DS_Store
+*.idea
+*.pyc
+__pycache__
