@@ -32,11 +32,17 @@ def get_img_class(img_name, gbif_species_map):
 
 
 def get_bbox_coords(raw_anno, w, h):
-    anno_dict = ast.literal_eval(raw_anno)
-    xmin = (anno_dict['x']-anno_dict['w']/2) * w
-    ymin = (anno_dict['y']-anno_dict['h']/2) * h
-    xmax = (anno_dict['x']+anno_dict['w']/2) * w
-    ymax = (anno_dict['y']+anno_dict['h']/2) * h
+    if pd.isna(raw_anno):
+        xmin = -1
+        ymin = -1
+        xmax = -1
+        ymax = -1
+    else:
+        anno_dict = ast.literal_eval(raw_anno)
+        xmin = (anno_dict['x']-anno_dict['w']/2) * w
+        ymin = (anno_dict['y']-anno_dict['h']/2) * h
+        xmax = (anno_dict['x']+anno_dict['w']/2) * w
+        ymax = (anno_dict['y']+anno_dict['h']/2) * h
 
     return xmin, ymin, xmax, ymax
 
@@ -55,19 +61,20 @@ def train_val_test_split(df, split_ratios):
     np.random.shuffle(filenames)
 
     # Find the indexes at which to split the filename list into training, validation, and testing
-    train_val_split = math.ceil((1-train_ratio) * len(filenames))
-    val_test_split = train_val_split + math.ceil((1-validation_ratio) * len(filenames))
-    # split_idx = math.ceil((1-train_ratio) * len(filenames))
+    train_val_split = math.ceil(train_ratio * len(filenames))
+    val_test_split = math.ceil((train_ratio + validation_ratio) * len(filenames))
 
     # Use the split to get the list of image filenames for each split
     train_filenames = filenames[:train_val_split]
     val_filenames = filenames[train_val_split:val_test_split]
     test_filenames = filenames[val_test_split:]
+    print(len(train_filenames), len(val_filenames), len(test_filenames))
 
     # Filter the dataframes based on filenames
     df_train = df[df['filename'].isin(train_filenames)]
     df_val = df[df['filename'].isin(val_filenames)]
     df_test = df[df['filename'].isin(test_filenames)]
+    print(len(df_train), len(df_val), len(df_test))
 
     return df_train, df_val, df_test
 
@@ -100,7 +107,8 @@ def standardize_lost(image_directory, annotation_file):
 
     # Read Annotations
     raw = pd.read_csv(annotation_file)
-    annos = raw[~pd.isna(raw['anno.anno_task_id'])]   # Remove instances with no annotations
+    annos = raw
+    # annos = raw[~pd.isna(raw['anno.anno_task_id'])]   # Remove instances with no annotations
 
     # Filename
     annos['filename'] = annos['img.img_path'].apply(lambda x: Path(x).name)
@@ -109,12 +117,12 @@ def standardize_lost(image_directory, annotation_file):
     annos['width'], annos['height'] = list(zip(*annos['filename'].apply(get_img_size)))
 
     # Class
-    annos['class'] = annos['anno.lbl.name'].apply(lambda x: ast.literal_eval(x)[0])
+    label_lists = annos['anno.lbl.name'].apply(lambda x: ast.literal_eval(x))
+    label_lists.apply(lambda x: x[0] if len(x)>0 else None)
+    annos['class'] = label_lists.apply(lambda x: x[0] if len(x)>0 else None)
 
     # Bounding Box Coordinates
-    coord_list = [get_bbox_coords(d, w, h) for d, w, h in zip(annos['anno.data'],
-                                                              annos['width'],
-                                                              annos['height'])]
+    coord_list = [get_bbox_coords(d, w, h) for d, w, h in zip(annos['anno.data'], annos['width'], annos['height'])]
     annos['xmin'], annos['ymin'], annos['xmax'], annos['ymax'] = list(zip(*coord_list))
 
     nicely_named = annos[['filename', 'width', 'height', 'class', 'xmin', 'ymin', 'xmax', 'ymax']]
@@ -196,19 +204,20 @@ def create_tf_example(group, label_map, image_directory):
     weights = []  # Important line
 
     for index, row in group.object.iterrows():
-        if row['class'] in label_map:
+        if int(row['xmin']) > -1:
             xmins.append(row['xmin'] / width)
             xmaxs.append(row['xmax'] / width)
             ymins.append(row['ymin'] / height)
             ymaxs.append(row['ymax'] / height)
             classes_text.append(row['class'].encode('utf8'))
             classes.append(label_map[row['class']])
-            class_name = row['class']
-            class_id = label_map[row['class']]
-            # print('class_weights:', class_weights[class_id])
-            # weights.append(class_weights[class_id])
         else:
-            print(group.filename, row['class'])
+            xmins.append(0)
+            xmaxs.append(0)
+            ymins.append(0)
+            ymaxs.append(0)
+            classes_text.append('NONE'.encode('utf8'))
+            classes.append(0)
 
     tf_example = tf.train.Example(features=tf.train.Features(feature={
         'image/height': dataset_util.int64_feature(height),
