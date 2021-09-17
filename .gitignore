@@ -3,8 +3,18 @@
 *.png
 *.tif
 
+# Other Data
+*.csv
+*.pbtxt
+*.tfrecord
+**/input/*
+**/output/*
+
 # Python Artifacts
 .DS_Store
 *.idea
 *.pyc
 __pycache__
+
+# Jupyter Notebook Artifacts
+.ipynb_checkpoints
