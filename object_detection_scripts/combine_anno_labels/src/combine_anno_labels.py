@@ -67,5 +67,9 @@ if __name__ == '__main__':
                                        )
     combined_label_df.to_csv(Path(args.out_path))
     # e.g.
-    #
+    # python combine_anno_labels.py \
+    # --anno_file ../input/gab2/gabriola_2_annos.csv \
+    # --label_tree_file ../input/gab2/cormorants_labels.csv \
+    # --out_path ../output/gabriola_2_annos_combined.csv \
+    # --desired_labels Cormorant Nest
 
