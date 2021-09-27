@@ -1,3 +1,11 @@
+"""
+e.g.
+python combine_anno_labels.py \
+  --anno_file ../input/gab2/gabriola_2_annos.csv \
+  --label_tree_file ../input/gab2/cormorants_labels.csv \
+  --out_path ../output/gabriola_2_annos_combined.csv \
+  --desired_labels Cormorant Nest
+"""
 import argparse
 import pandas as pd
 from pathlib import Path
@@ -45,7 +53,6 @@ def combine_labels(anno_file, label_tree_file, desired_labels):
     df_annos = pd.read_csv(anno_file)
     label_tree = read_label_tree(label_tree_file)
     label_mapper = label2agglabel(label_tree, desired_labels)
-    print(desired_labels)
     df_annos['anno.lbl.name'] = df_annos['anno.lbl.name'].apply(lambda x: convert_label_list(x, label_mapper))
     new_df_annos = df_annos.drop(['anno.lbl.idx', 'anno.lbl.external_id'], axis=1)
 
@@ -66,10 +73,5 @@ if __name__ == '__main__':
                                        args.desired_labels,
                                        )
     combined_label_df.to_csv(Path(args.out_path))
-    # e.g.
-    # python combine_anno_labels.py \
-    # --anno_file ../input/gab2/gabriola_2_annos.csv \
-    # --label_tree_file ../input/gab2/cormorants_labels.csv \
-    # --out_path ../output/gabriola_2_annos_combined.csv \
-    # --desired_labels Cormorant Nest
+
 

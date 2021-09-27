@@ -1,9 +1,17 @@
-# **********************************************************************************************************************
-# Converting Lost Annotation Format to CSV format in preparation for conversion to TFRecord
-# Final csv based on data found here:
-#       https://github.com/datitran/raccoon_dataset/blob/master/data/raccoon_labels.csv
-# Author: Jillian Anderson (jilliana@sfu.ca)
-# **********************************************************************************************************************
+"""
+Converting Lost Annotation Format to CSV format in preparation for conversion to TFRecord
+Final csv based on data found here:
+      https://github.com/datitran/raccoon_dataset/blob/master/data/raccoon_labels.csv
+Author: Jillian Anderson (jilliana@sfu.ca)
+
+e.g.
+python3 lost_to_tfrecord.py \
+  --img_dir ../input/DEMO/DEMO_img/ \
+  --anno_file ../input/DEMO/demo_lost_annotations.csv \
+  --split 0.7 0.15 0.15 \
+  --label_map ../input/DEMO/DEMO_label_map.pbtxt \
+  --out_path ../output/DEMO/
+"""
 import pandas as pd
 from PIL import Image, ExifTags
 import ast
@@ -255,10 +263,4 @@ if __name__ == '__main__':
                      output_path=Path(args.out_path),
                      )
 
-    # e.g.
-    # python3 lost_to_tfrecord.py \
-    #   --img_dir ../input/DEMO/DEMO_img/ \
-    #   --anno_file ../input/DEMO/demo_lost_annotations.csv \
-    #   --split 0.7 0.15 0.15 \
-    #   --label_map ../input/DEMO/DEMO_label_map.pbtxt \
-    #   --out_path ../output/DEMO/
+
