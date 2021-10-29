@@ -1,4 +1,10 @@
 """
+Setting up inputs
+* Original Image Directory. e.g. from ../input/snb/cormorants-nesting-scripts/SNB_20_24062021 run
+  ln -s ../../../../tile_tifs/output/SNB_20_24062021/* .
+* Annotated Image Directories. e.g. from ../input/snb1/anno_snb1 run
+  ln -s ../../../../random_data_selector/output/SNB/* .
+
 e.g.
 python3 collect_annotation_pools.py \
   --original_image_dir ../input/gab2/06-30\ Gabriola\ Panorama/ \
