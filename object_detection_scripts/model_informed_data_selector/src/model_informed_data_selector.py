@@ -3,9 +3,13 @@ Based off of ...
 
 e.g.
 python3 model_informed_data_selector.py \
-  --unannotated_pool ../input/gab2/unannotated_pool \
-  --exported_model ../input/gab2/centernet_resnet101_512_v2 \
-  --out_dir ../output/gab2/centernet_resnet101_512_v2
+  --unannotated_pool ../input/snb1/unannotated_pool \
+  --exported_model ../input/snb1/centernet_resnet101_512_v3 \
+  --tf_label_map ../input/snb1/label_map.pbtxt \
+  --lost_label_tree ../input/snb1/cormorants_labels.csv \
+  --out_dir ../output/snb1/centernet_resnet101_512_v3_TEST
+  --box_thresh 0.1
+
 """
 import argparse
 from pathlib import Path
@@ -61,7 +65,6 @@ def load_image_into_numpy_array(path):
     Returns:
       numpy array with shape (img_height, img_width, 3)
     """
-
     return np.array(Image.open(path))
 
 
@@ -206,22 +209,76 @@ def find_images_with_detections(detections):
     return images_with_detections
 
 
-def select_tiles(exported_model_dir, unannotated_pool_dir, out_dir, tf2lost_label_map):
+def read_tf_label_map(label_map_path):
+    item_id = None
+    item_name = None
+    items = {}
+
+    with open(label_map_path, "r") as file:
+        for line in file:
+            line.replace(" ", "")
+            if line == "item{":
+                pass
+            elif line == "}":
+                pass
+            elif "id" in line:
+                item_id = int(line.split(":", 1)[1].strip())
+            elif "name" in line:
+                item_name = line.split(":", 1)[1].replace("'", "").strip()
+
+            if item_id is not None and item_name is not None:
+                items[item_id] = item_name
+                item_id = None
+                item_name = None
+
+    return items
+
+
+def read_lost_label_tree(label_tree_path):
+    df = pd.read_csv(label_tree_path)
+    return {n: i for i, n in zip(df['idx'], df['name'])}
+
+
+def create_tf2lost_map(tf_label_map, lost_label_tree):
+    # Create a dictionary that maps a TF ID to a label name
+    tf2label = read_tf_label_map(tf_label_map)
+
+    # Create a dictionary that maps a label name to a LOST ID
+    label2lost = read_lost_label_tree(lost_label_tree)
+
+    # Create a mapping from TF Ids to LOST Ids. 1 is subtracted from TF ids to match the labels in
+    # the detection output (start at 0).
+    tf2lost = {tf_id-1: label2lost[tf_name] for tf_id, tf_name in tf2label.items()}
+
+    return tf2lost
+
+
+def calc_num_detections(detections):
+    num_detections_per_image = [len(d['detection_scores']) for d in detections.values()]
+    total_objects_detected = sum(num_detections_per_image)
+    return total_objects_detected
+
+
+def select_tiles(exported_model_dir, unannotated_pool_dir, out_dir, tf_label_map, lost_label_tree, box_thresh):
     # Load the Model
     detection_model, checkpoint = load_model(exported_model_dir)
 
     # Use the detection model to conduct inference on the unannotated pool
     detections = inference_as_raw_output(unannotated_pool_dir,
                                          detection_model,
-                                         box_th=0.1)
+                                         box_th=box_thresh)
 
     # Select images from the unannotated pool to annotate.
     images = find_images_with_detections(detections)
 
+    # Create the TF Class ID to Lost ID Map
+    tf2lost_map = create_tf2lost_map(tf_label_map, lost_label_tree)
+
     # Write detections to a file
     save_images(images, out_dir)
+    save_detections(detections, out_dir, tf2lost_map)
 
-    save_detections(detections, out_dir, tf2lost_label_map)
+    print(f"Detected {calc_num_detections(detections)} objects in {len(set(images))} images")
 
 
 def save_images(tiles, out_dir):
@@ -282,16 +339,20 @@ def save_detections(detections, out_dir, tf2lost_label_map):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Takes a file path as input and tiles each .tif'
                                                  'file in that directory.')
-    parser.add_argument('--unannotated_pool', help='File path to the directory containing unannotated tiles. i.e. the directory containing the  containing tifs to be tiled.')
-    parser.add_argument('--exported_model', help='File path to the directory containing the saved model')
-    parser.add_argument('--tf2lost_label_map', help='.')
+    parser.add_argument('--unannotated_pool', help='File path to the directory containing '
+                                                   'unannotated tiles. i.e. the directory '
+                                                   'containing the  containing tifs to be tiled.')
+    parser.add_argument('--exported_model', help='File path to the directory containing the saved '
+                                                 'model')
+    parser.add_argument('--tf_label_map', help='File path to the file')
+    parser.add_argument('--lost_label_tree', help='.')
     parser.add_argument('--out_dir', help='.')
-
+    parser.add_argument('--box_thresh', help='.', type=float)
     args = parser.parse_args()
-
-    tf2lost_label_map = {0: 39}
 
     select_tiles(exported_model_dir=Path(args.exported_model),
                  unannotated_pool_dir=Path(args.unannotated_pool),
                  out_dir=Path(args.out_dir),
-                 tf2lost_label_map=tf2lost_label_map)
+                 tf_label_map=Path(args.tf_label_map),
+                 lost_label_tree=Path(args.lost_label_tree),
+                 box_thresh=args.box_thresh)
