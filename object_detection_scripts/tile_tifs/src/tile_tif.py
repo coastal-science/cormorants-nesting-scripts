@@ -1,7 +1,14 @@
 """
-
 Based off
 github.com/jillianderson8/cmpt733finalproject/blob/master/Code/3_tileAnnotate/src/tileAnnotate.py
+
+e.g.
+python3 tile_tif.py \
+--in_dir ../input/2020_SNB/ \
+--out_dir ../output/2020_SNB/ \
+--tile_height 1000 \
+--tile_width 1000
+
 """
 import math
 from PIL import Image
