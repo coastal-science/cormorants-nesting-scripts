@@ -11,13 +11,13 @@ python3 tile_tif.py \
 
 """
 import math
-from PIL import Image
+from PIL import Image, ImageFile
 import argparse
 import os
 from pathlib import Path
 
 Image.MAX_IMAGE_PIXELS = 3000000000
-
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def tile_image(image, tile_height, tile_width, out_dir, out_extension):
     """
