@@ -6,15 +6,19 @@ resize_image.py \
   --rescale_factor 10
 """
 import argparse
-from PIL import Image
+from PIL import Image, ImageFile
+from pathlib import Path
 
 Image.MAX_IMAGE_PIXELS = 3000000000
-
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def main(img_file, out_file, rescale_factor=10):
     fullsize_im = Image.open(img_file)
     im = fullsize_im.reduce(factor=rescale_factor)
     rgb_im = im.convert('RGB')
+
+    # Save
+    Path(out_file).parent.mkdir(parents=True, exist_ok=True)
     rgb_im.save(out_file)
 
 
