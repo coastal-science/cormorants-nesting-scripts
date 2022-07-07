@@ -9,6 +9,7 @@ python3 model_informed_data_selector.py \
   --lost_label_tree ../input/snb1/cormorants_labels.csv \
   --out_dir ../output/snb1/centernet_resnet101_512_v3_TEST
   --box_thresh 0.1
+  --filter_max_score 0.2
 
 """
 import argparse
@@ -18,11 +19,11 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 import pandas as pd
+import operator
 
 # importing all scripts that will be needed to export your model and use it for inference
 from object_detection.utils import config_util
 from object_detection.builders import model_builder
-
 
 def load_model(exported_model):
     configs = config_util.get_configs_from_pipeline_file(str(exported_model.joinpath('pipeline.config')))
@@ -259,7 +260,19 @@ def calc_num_detections(detections):
     return total_objects_detected
 
 
-def select_tiles(exported_model_dir, unannotated_pool_dir, out_dir, tf_label_map, lost_label_tree, box_thresh):
+def filter_detections(detections, score_filter):
+    (filter_func, filter_op), filter_thresh = score_filter
+    non_empty = {f: d for f, d in detections.items() if len(d['detection_scores']) > 0}
+    filtered_detections = {}
+    for file, data in non_empty.items():
+        filtering_val = filter_func(data['detection_scores'])
+        if filter_op(filtering_val, filter_thresh):
+            filtered_detections[file]= data
+
+    return filtered_detections
+
+
+def select_tiles(exported_model_dir, unannotated_pool_dir, out_dir, tf_label_map, lost_label_tree, box_thresh, score_filter=None):
     # Load the Model
     detection_model, checkpoint = load_model(exported_model_dir)
 
@@ -267,6 +280,10 @@ def select_tiles(exported_model_dir, unannotated_pool_dir, out_dir, tf_label_map
     detections = inference_as_raw_output(unannotated_pool_dir,
                                          detection_model,
                                          box_th=box_thresh)
+
+    # Filter the detections based on the provided score filter
+    if score_filter:
+        detections = filter_detections(detections, score_filter)
 
     # Select images from the unannotated pool to annotate.
     images = find_images_with_detections(detections)
@@ -333,10 +350,14 @@ def save_detections(detections, out_dir, tf2lost_label_map):
     detection_df['anno.data'] = [get_lost_bboxes(d['detection_boxes']) for d in indiv_detections]
     detection_df['anno.lbl.idx'] = [tf2lost_label_map[d['detection_classes']] for d in indiv_detections]
 
+    # detection_df['detection_scores'] = [d['detection_scores'] for d in indiv_detections]
+
     detection_df.to_csv(detection_out_path)
 
 
 if __name__ == '__main__':
+    filters = {'max': (max, operator.le)}
+
     parser = argparse.ArgumentParser(description='Takes a file path as input and tiles each .tif'
                                                  'file in that directory.')
     parser.add_argument('--unannotated_pool', help='File path to the directory containing '
@@ -348,11 +369,20 @@ if __name__ == '__main__':
     parser.add_argument('--lost_label_tree', help='.')
     parser.add_argument('--out_dir', help='.')
     parser.add_argument('--box_thresh', help='.', type=float)
+    parser.add_argument('--filter', help='.', type=str)
+    parser.add_argument('--filter_thresh', help='.', type=float)
+
     args = parser.parse_args()
+
+    if args.filter:
+        score_filter = (filters[args.filter], args.filter_thresh)
+    else:
+        score_filter = None
 
     select_tiles(exported_model_dir=Path(args.exported_model),
                  unannotated_pool_dir=Path(args.unannotated_pool),
                  out_dir=Path(args.out_dir),
                  tf_label_map=Path(args.tf_label_map),
                  lost_label_tree=Path(args.lost_label_tree),
-                 box_thresh=args.box_thresh)
+                 box_thresh=args.box_thresh,
+                 score_filter=score_filter)
