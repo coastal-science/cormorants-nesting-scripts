@@ -13,11 +13,11 @@ python3 tile_tif.py \
 import math
 from PIL import Image, ImageFile
 import argparse
-import os
 from pathlib import Path
 
 Image.MAX_IMAGE_PIXELS = 3000000000
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 
 def tile_image(image, tile_height, tile_width, out_dir, out_extension):
     """
@@ -26,7 +26,7 @@ def tile_image(image, tile_height, tile_width, out_dir, out_extension):
     img_width, img_height = image.size
 
     # Create tile output directory
-    out_dir.mkdir(exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     # Tile Images
     num_tiles_vert = math.ceil(img_height / tile_height)
