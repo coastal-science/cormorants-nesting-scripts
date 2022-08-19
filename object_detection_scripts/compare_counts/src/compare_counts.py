@@ -1,3 +1,21 @@
+"""
+e.g. RMSE
+python3 compare_counts.py \
+  --true_counts ../input/SNB_2020/VALIDATION/Counts_Revised.csv \
+  --detections_dir ../input/SNB_2020/VALIDATION/detections \
+  --file_map ../input/SNB_2020/VALIDATION/file_map.json \
+  --out_path ../output/SNB_2020/VALIDATION/revised/2020_val_revised_rmse.png \
+  --plot_type rmse
+
+e.g. Count Comparisons
+python3 compare_counts.py \
+  --true_counts ../input/SNB_2020/VALIDATION/Counts_Revised.csv  \
+  --detections_dir ../input/SNB_2020/VALIDATION/detections \
+  --file_map ../input/SNB_2020/VALIDATION/file_map.json \
+  --out_path ../output/SNB_2020/VALIDATION/revised/2020_val_revised_b0.2_n0.4.png \
+  --plot_type counts \
+  --threshold "{0.0: 0.2, 1.0:0.4}"
+"""
 import argparse
 import pandas as pd
 import seaborn as sns
@@ -13,6 +31,7 @@ label_map = {0.0: 'Birds',
              'Birds': 0.1,
              'Nests': 0.0}
 
+
 def rmse_plots(detections_dir, file_map_path, out_path, true_counts_csv=None, threshold=None):
     if not threshold:
         threshold = list(np.arange(0, 1, 0.05, ))
@@ -26,9 +45,11 @@ def rmse_plots(detections_dir, file_map_path, out_path, true_counts_csv=None, th
         true_counts = pd.read_csv(true_counts_csv, header=1).set_index(
             'date').transpose().rename_axis(
             'date').reset_index()
-        true_counts.columns = ['Date', 'Nests', 'AdultBirds', 'Chicks', 'Birds']
+        # true_counts.columns = ['Date', 'Nests', 'AdultBirds', 'Chicks', 'Birds']
+        true_counts.rename(columns={'date': 'Date'}, inplace=True)
         true_counts = true_counts[['Date', 'Nests', 'Birds']]
-        counts = true_counts.melt(id_vars='Date', value_name='Manual')
+        counts = true_counts.melt(id_vars='Date', var_name='variable', value_name='Manual')
+
         original_columns = counts.columns
         # Detections
         for detection_set in file_map:
@@ -61,12 +82,12 @@ def rmse_plots(detections_dir, file_map_path, out_path, true_counts_csv=None, th
             rmse_df = pd.concat([rmse_df,
                                  pd.DataFrame({'DetectionMethod': detection_methods,
                                                'Variable': variables,
-                                               'ConfidenceTreshold': thresh,
+                                               'ConfidenceThreshold': thresh,
                                                'RMSE': rmses
                                                })],
                                 ignore_index=True)
 
-    sns.relplot(data=rmse_df, x='ConfidenceTreshold', y='RMSE', hue='Variable',
+    sns.relplot(data=rmse_df, x='ConfidenceThreshold', y='RMSE', hue='Variable',
                 col='DetectionMethod',  col_wrap=1, kind='line')
     plt.xlabel("Confidence Score Threshold")
     plt.ylabel("RMSE")
@@ -91,17 +112,16 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
         true_counts = pd.read_csv(true_counts_csv, header=1).set_index(
             'date').transpose().rename_axis(
             'date').reset_index()
-        true_counts.columns = ['Date', f"Nests @ {threshold[1]}", 'AdultBirds',
-                               'Chicks', f"Birds @ {threshold[0]}"]
-        true_counts = true_counts[['Date', f"Nests @ {threshold[1]}", f"Birds @ {threshold[0]}"]]
-        counts = true_counts.melt(id_vars='Date', value_name='Manual')
-        original_columns = counts.columns
+        true_counts = true_counts[['date', 'Nests', 'Birds']]
+        true_counts.columns = ['Date', f"Nests @ {threshold[1]}", f"Birds @ {threshold[0]}"]
+        counts = true_counts.melt(id_vars='Date', var_name='variable', value_name='Manual')
+        # original_columns = counts.columns
 
     else:
-        dates_df = pd.DataFrame({'Date': list(file_map.values())[0].keys()})
+        dates_df = pd.DataFrame({'Date': list(list(file_map.values())[0].keys())})
         var_df = pd.DataFrame({'variable': [f"Nests @ {threshold[1]}", f"Birds @ {threshold[0]}"]})
         counts = pd.merge(dates_df, var_df, how='cross')
-        original_columns = counts.columns
+        # original_columns = counts.columns
 
     for detection_set in file_map:
         dates = []
@@ -109,7 +129,7 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
         bird_counts = []
         for date, detection_file in file_map[detection_set].items():
             det_df = pd.read_csv(Path(detections_dir).joinpath(Path(detection_file)))
-
+            det_df = det_df[~det_df['detection_scores'].isna()]
             threshold_bool = []
             for label, score in zip(det_df['detection_classes'], det_df['detection_scores']):
                 if score >= threshold[label]:
@@ -129,6 +149,7 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
             except KeyError:
                 print("Found no nests")
                 nest_counts.append(0)
+        print(len(dates), len(nest_counts), len(bird_counts))
         det_df = pd.DataFrame({'Date': dates,
                                 f'Nests @ {threshold[1]}': nest_counts,
                                 f'Birds @ {threshold[0]}': bird_counts})
@@ -141,11 +162,12 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
     if len(file_map) == 1:
         g = sns.catplot(data=data, x='Date', y='value', col='variable',
                         kind='bar', col_wrap=1, sharex=False,
-                        # hue='method',
+                        hue='method',
                         palette=[
                             # '#fc8d59',
-                            '#abd9e9'],
-                        # legend_out=False,
+                            '#abd9e9'
+                        ],
+                        legend_out=False,
                         )
     else:
         g = sns.catplot(data=data, x='Date', y='value',
@@ -154,10 +176,12 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
                         kind='bar',
                         palette=[
                             '#fc8d59',
+                            "#2c7bb6",
                             "#abd9e9",
-                            # "#2c7bb6"
                         ],
-                        col_wrap=1, sharex=False)
+                        col_wrap=1, sharex=False,
+                        legend_out=False,
+                        )
     (g.set_axis_labels("", "Raw Counts")
       .set_titles("{col_name}")
       .despine())
@@ -166,7 +190,7 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
     # sns.move_legend(g, "upper center", bbox_to_anchor=(0.5, 0.8), title='Count Method', orient='h')
     # g.fig.suptitle('ONE TITLE FOR ALL')
     sns.despine()
-    plt.gcf().set_size_inches(25, 20)
+    plt.gcf().set_size_inches(15, 10)
     plt.savefig(out_path, dpi=600)
 
 
