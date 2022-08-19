@@ -15,6 +15,30 @@ The remainder of this README is organized with the following information:
 ## Task Flow
 ![Pipeline Summary](PipelineSummary.png)
 
+To Organize:
+**Annotation Pipeline**
+* `tile_tifs`
+* `random_data_selector`
+* `model_informed_data_selector`
+* LOST annotations (birds & nests)
+* `combine_anno_labels`
+* `lost_to_tf`
+
+**Training Pipeline**
+* `train`
+* `export`
+
+**Prediction Pipeline**
+* `tile_tifs`
+* `resize_image`
+* Lost annotations (bridge masks)
+* `predict`
+* `post_process_detections`
+
+**Reporting Pipeline**
+* `compare_counts` (bar charts)
+* `draw_final_detections`
+
 ## Directory Structure
 The object detection code has been organized according to the specific 
 task/function that code corresponds to. In other words, each sub-directory is

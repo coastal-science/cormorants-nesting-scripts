@@ -2,13 +2,19 @@
 Based off
 github.com/jillianderson8/cmpt733finalproject/blob/master/Code/3_tileAnnotate/src/tileAnnotate.py
 
-e.g.
+e.g. Tile a directory of tifs
 python3 tile_tif.py \
 --in_dir ../input/2020_SNB/ \
 --out_dir ../output/2020_SNB/ \
 --tile_height 1000 \
 --tile_width 1000
 
+e.g. Tile a single file
+python3 tile_tif.py \
+--in_file ../input/2020_SNB/FILENAME.tif \
+--out_dir ../output/2020_SNB/FILENAME/ \
+--tile_height 1000 \
+--tile_width 1000
 """
 import math
 from PIL import Image, ImageFile
@@ -49,6 +55,18 @@ def tile_image(image, tile_height, tile_width, out_dir, out_extension):
                 print(e)
 
 
+def tile_single_tif(file_path, tile_height, tile_width, out_dir, out_extension='JPG'):
+    # Open Image
+    image = Image.open(file_path)
+
+    # Tile Image
+    tile_image(image,
+               tile_height=tile_height,
+               tile_width=tile_width,
+               out_dir=out_dir,
+               out_extension='jpg')
+
+
 def tile_all_tifs(directory, tile_height, tile_width, out_directory, out_extension='JPG'):
     all_tifs = directory.glob("*.tif")
     for tif in all_tifs:
@@ -69,12 +87,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Takes a file path as input and tiles each .tif'
                                                  'file in that directory.')
     parser.add_argument('--in_dir', help='File path to the directory containing tifs to be tiled.')
+    parser.add_argument('--in_file', help='File path to the directory containing tifs to be tiled.')
     parser.add_argument('--out_dir', help='File path to output directory.')
     parser.add_argument('--tile_height', type=int, help='Height in pixels of the resulting tiles')
     parser.add_argument('--tile_width', type=int, help='Width in pixels of the resulting tiles')
     args = parser.parse_args()
 
-    tile_all_tifs(Path(args.in_dir),
-                  args.tile_height,
-                  args.tile_width,
-                  Path(args.out_dir))
+    if args.in_dir:
+        tile_all_tifs(Path(args.in_dir),
+                      args.tile_height,
+                      args.tile_width,
+                      Path(args.out_dir))
+    elif args.in_file:
+        tile_single_tif(Path(args.in_file),
+                        args.tile_height,
+                        args.tile_width,
+                        Path(args.out_dir))
