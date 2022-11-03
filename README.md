@@ -12,7 +12,7 @@ This assumes the TIF images have already been uploaded to Cedar.
     * `ssh <USER>@cedar.computecanada.ca`
     * When prompted, input your Compute Canada username & password
 2. Navigate to the correct location
-    * `cd projects/cd-ruthjoy/jillian/Tensorflow/workspace`
+    * `cd projects/ctb-ruthjoy/jillian/Tensorflow/workspace`
 3. Update the `run_model_on_new_pano.sh` script
     * Open the file: `nano run_model_on_new_pano.sh`
     * Update `--mail-user`: This line might look like 
@@ -32,7 +32,7 @@ This assumes the TIF images have already been uploaded to Cedar.
       be asked whether you want to save the file. Use `Y` to save.
 4. Submit the job: 
     * From the `workspace` directory, run 
-    `sbatch --acount=def-ruthjoy run_model_on_new_pano.sh`. The job has been 
+    `sbatch --account=def-ruthjoy run_model_on_new_pano.sh`. The job has been 
      successfully submitted when you receive a response such as 
      `Submitted batch job 44648250`. The number at the end of this confirmation
      is the Job ID. 
