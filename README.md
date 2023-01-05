@@ -18,12 +18,7 @@ This assumes the TIF images have already been uploaded to Cedar.
     * Update `--mail-user`: This line might look like 
       `#SBATCH --mail-user=email@sfu.ca`. This tells the script where email
        notifications should be sent. Update this to be your email. 
-    * Update `TASK_PATH`: This line might look like 
-      `TASK_PATH="YEAR/DATASET/XX_MONTH/SNB_YYYYMMDD/"`. This path tells the script 
-      where to find inputs & where to put outputs. It must be unique (otherwise you 
-      will overwrite previous results). Do not include spaces in this path. Whenever
-      possible, follow the format given here. For example: 
-      `TASK_PATH="2020/TEST/08_August/SNB_20200803/"`. 
+    * Update `TASK_PATH`: This line might look like `TASK_PATH="YEAR/DATASET/XX_MONTH/SNB_YYYYMMDD/"`. This path tells the script where to place outputs (tiles, prediction results). Some steps in the script also use this path to determine where inputs are located (e.g. the prediction command uses the tiles as input). This path should be unique, otherwise you will overwrite previous results. Do not include spaces in this path. Whenever possible, follow the format given here. For example: `TASK_PATH="2020/TEST/08_August/SNB_20200803/"`. 
     * Update `IMAGE`: This line might look like 
       `IMAGE="/~/projects/ctb-ruthjoy/CormorantNestingBC/YYYY/IMG.tif`. This path 
       tells the script where it can find the original image being run through the 
