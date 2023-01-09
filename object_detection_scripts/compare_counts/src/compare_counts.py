@@ -17,6 +17,8 @@ python3 compare_counts.py \
   --threshold "{0.0: 0.2, 1.0:0.4}"
 """
 import argparse
+import pdb
+
 import pandas as pd
 import seaborn as sns
 import json
@@ -26,28 +28,22 @@ from sklearn.metrics import mean_squared_error
 import numpy as np
 from ast import literal_eval
 
-label_map = {0.0: 'Birds',
-             1.0: 'Nests',
-             'Birds': 0.1,
-             'Nests': 0.0}
+label_map = {0.0: 'Cormorant',
+             1.0: 'Nest',
+             'Cormorant': 0.1,
+             'Nest': 0.0}
 
 
 def rmse_plots(detections_dir, file_map_path, out_path, true_counts_csv=None, threshold=None):
     if not threshold:
-        threshold = list(np.arange(0, 1, 0.05, ))
+        threshold = list(np.arange(0, 1, 0.05,))
 
     with open(Path(file_map_path)) as f:
         file_map = json.load(f)
 
     rmse_df = pd.DataFrame()
     for thresh in threshold:
-        # True Counts
-        true_counts = pd.read_csv(true_counts_csv, header=1).set_index(
-            'date').transpose().rename_axis(
-            'date').reset_index()
-        # true_counts.columns = ['Date', 'Nests', 'AdultBirds', 'Chicks', 'Birds']
-        true_counts.rename(columns={'date': 'Date'}, inplace=True)
-        true_counts = true_counts[['Date', 'Nests', 'Birds']]
+        true_counts = pd.read_csv(true_counts_csv)
         counts = true_counts.melt(id_vars='Date', var_name='variable', value_name='Manual')
 
         original_columns = counts.columns
@@ -60,12 +56,18 @@ def rmse_plots(detections_dir, file_map_path, out_path, true_counts_csv=None, th
                 det_df = pd.read_csv(Path(detections_dir).joinpath(Path(detection_file)))
                 det_df = det_df[det_df['detection_scores'] >= thresh]
                 dates.append(date)
-                bird_counts.append(det_df['detection_classes'].value_counts()[0.0])
-                nest_counts.append(det_df['detection_classes'].value_counts()[1.0])
+                try:
+                    bird_counts.append(det_df['detection_classes'].value_counts()[0.0])
+                except KeyError:
+                    bird_counts.append(0)
+                try:
+                    nest_counts.append(det_df['detection_classes'].value_counts()[1.0])
+                except KeyError:
+                    nest_counts.append(0)
 
             det_df = pd.DataFrame({'Date': dates,
-                                   'Nests': nest_counts,
-                                   'Birds': bird_counts})
+                                   'Nest': nest_counts,
+                                   'Cormorant': bird_counts})
             det_df = det_df.melt(id_vars='Date', value_name=detection_set)
             counts = counts.merge(det_df, on=['Date', 'variable'], how='inner')
 
@@ -86,7 +88,6 @@ def rmse_plots(detections_dir, file_map_path, out_path, true_counts_csv=None, th
                                                'RMSE': rmses
                                                })],
                                 ignore_index=True)
-
     sns.relplot(data=rmse_df, x='ConfidenceThreshold', y='RMSE', hue='Variable',
                 col='DetectionMethod',  col_wrap=1, kind='line')
     plt.xlabel("Confidence Score Threshold")
@@ -109,17 +110,24 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
 
     # True Counts
     if true_counts_csv is not None:
-        true_counts = pd.read_csv(true_counts_csv, header=1).set_index(
-            'date').transpose().rename_axis(
-            'date').reset_index()
-        true_counts = true_counts[['date', 'Nests', 'Birds']]
-        true_counts.columns = ['Date', f"Nests @ {threshold[1]}", f"Birds @ {threshold[0]}"]
+        # vNEWv
+        true_counts = pd.read_csv(true_counts_csv)
+        true_counts = true_counts[['Date', 'Nest', 'Cormorant']]
+        true_counts.columns = ['Date', f"Nest @ {threshold[1]}", f"Cormorant @ {threshold[0]}"]
         counts = true_counts.melt(id_vars='Date', var_name='variable', value_name='Manual')
+        # ^NEW^
+        # vOLDv
+        # true_counts = pd.read_csv(true_counts_csv, header=1).set_index(
+        #     'date').transpose().rename_axis(
+        #     'date').reset_index()
+        # true_counts = true_counts[['date', 'Nest', 'Cormorant']]
+        # true_counts.columns = ['Date', f"Nest @ {threshold[1]}", f"Cormorant @ {threshold[0]}"]
+        # counts = true_counts.melt(id_vars='Date', var_name='variable', value_name='Manual')
+        # ^OLD^
         # original_columns = counts.columns
-
     else:
         dates_df = pd.DataFrame({'Date': list(list(file_map.values())[0].keys())})
-        var_df = pd.DataFrame({'variable': [f"Nests @ {threshold[1]}", f"Birds @ {threshold[0]}"]})
+        var_df = pd.DataFrame({'variable': [f"Nest @ {threshold[1]}", f"Cormorant @ {threshold[0]}"]})
         counts = pd.merge(dates_df, var_df, how='cross')
         # original_columns = counts.columns
 
@@ -137,22 +145,21 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
                 else:
                     threshold_bool.append(False)
             det_df = det_df[threshold_bool]
-
             dates.append(date)
             try:
                 bird_counts.append(det_df['detection_classes'].value_counts()[0.0])
             except KeyError:
-                print("Found no birds")
+                print("Found no Cormorant")
                 bird_counts.append(0)
             try:
                 nest_counts.append(det_df['detection_classes'].value_counts()[1.0])
             except KeyError:
-                print("Found no nests")
+                print("Found no Nest")
                 nest_counts.append(0)
         print(len(dates), len(nest_counts), len(bird_counts))
         det_df = pd.DataFrame({'Date': dates,
-                                f'Nests @ {threshold[1]}': nest_counts,
-                                f'Birds @ {threshold[0]}': bird_counts})
+                                f'Nest @ {threshold[1]}': nest_counts,
+                                f'Cormorant @ {threshold[0]}': bird_counts})
         melted = det_df.melt(id_vars='Date', value_name=detection_set)
         counts = counts.merge(melted, on=['Date', 'variable'], how='inner')
 
@@ -176,7 +183,9 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
                         kind='bar',
                         palette=[
                             '#fc8d59',
-                            "#2c7bb6",
+                            # "#2c7bb6",
+                            "#5c9dcd",
+                            "#8fc0e3",
                             "#abd9e9",
                         ],
                         col_wrap=1, sharex=False,
