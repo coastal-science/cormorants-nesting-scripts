@@ -9,15 +9,23 @@
 
 # Prepare Environment
 module load python/3.7 gcc/9.3.0 arrow/2.0.0 cuda/11.0 cudnn/8.0.3
-source ../tensorflow-scratch/bin/activate
+source config-env.sh
+# source ../tensorflow-scratch/bin/activate
+source $ENVDIR/bin/activate && \
+echo && echo Activated environment "$NAME"
+
+export LOGSDIR="$WORKSPACE/logs_$SLURM_JOB_ID" && \
+mkdir -p $LOGSDIR
+
 # pip install tensorflow protobuf Cython pycocotools --no-index
 # pip install tf-models-official==2.5.1
 # pip install pyarrow==2.0.0
 
-cd ../models/research
+# cd ../models/research
 # python -m pip install --user .
-cd ../../workspace
+# cd ../../workspace
 # pip install numpy --upgrade 
+cd $WORKSPACE
 
 #Choose a Model
 #MODELDIR=models/gab1/centernet_hourglass_1024/v1
@@ -37,17 +45,25 @@ cd ../../workspace
 #MODELDIR=models/snb5/ssd_resnet50_1024/v2
 #MODELDIR=models/snb5/ssd_resnet50_1024/v4
 MODELDIR=models/snb6/ssd_resnet50_1024/v1
-MODELDIR=models/snb6/centernet_resnet101_512/v-IS
+MODELDIR=$WORKSPACE/models/snb6/centernet_resnet101_512/v-IS
 
 
 # Test the Tensorflow Installation
-python ../models/research/object_detection/builders/model_builder_tf2_test.py
+# python ../models/research/object_detection/builders/model_builder_tf2_test.py
+echo && echo "LOG STATUS: Testing Object Detection Model"
+
+# cd $TF_MODEL_GARDEN/models/research
+# python object_detection/builders/model_builder_tf2_test.py | tee $LOGSDIR/test-tf-od.log
+python $TF_OBJ_DET/builders/model_builder_tf2_test.py #| tee $LOGSDIR/test-tf-od.log
 
 # Tensorboard
+echo && echo "LOG STATUS: Launching Tensorboard"
 tensorboard --logdir=$MODELDIR --host 0.0.0.0 --load_fast false &
 
 # Starting the Executable
-python model_main_tf2.py \
+echo && echo "LOG STATUS: Start Training"
+
+python $TF_OBJ_DET/model_main_tf2.py \
   --pipeline_config_path=$MODELDIR/pipeline.config \
   --model_dir=$MODELDIR \
   --checkpoint_every_n=500 \
@@ -55,8 +71,10 @@ python model_main_tf2.py \
   --alsologtostderr &
 
 # Start the evaluator Script
-export CUDA_VISIBLE_DEVICES=-1
-python model_main_tf2.py \
+echo && echo "LOG STATUS: Start Validation"
+
+# export CUDA_VISIBLE_DEVICES=-1
+python $TF_OBJ_DET/model_main_tf2.py \
   --pipeline_config_path=$MODELDIR/pipeline.config \
   --model_dir=$MODELDIR \
   --checkpoint_dir=$MODELDIR \
@@ -64,6 +82,22 @@ python model_main_tf2.py \
   --sample_1_of_n_eval_examples=1
 
 # Write Script to Output
-cat train.sh > $MODELDIR/script.log
+cat train.sh > $MODELDIR/script.bak.log
+
+full_path=$(realpath $0) # $0 is the name of the current script as it was executed
+
+touch $MODELDIR/script.log
+(echo && echo ) >> $MODELDIR/script.log
+
+printenv | grep -E 'NAME|ENVDIR|DEPS|LOGSDIR|SCRATCH|PROJECT|WORKSPACE|TF_MODEL_GARDEN|TF_OBJ_DET|TFHUB_CACHE_DIR' \
+  >> $MODELDIR/script.log 
+
+(echo && echo && \
+echo "==============================================" && \
+echo && echo ) >> $MODELDIR/script.log
 
 
+cat full_path >> $MODELDIR/script.log
+cp $MODELDIR/script.log $LOGSDIR/ 
+
+echo Additional logs may be written to "$LOGSDIR"

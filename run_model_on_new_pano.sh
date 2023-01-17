@@ -2,49 +2,72 @@
 #SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=1  		# Look at Cluster docs for CPU/GPU ratio 
 #SBATCH --mem=16G       		# Memory proportional to GPUs: 32000 Cedar
-#SBATCH --time=0-1:00:00     		# DD-HH:MM:SS
-#SBATCH --mail-user=isahay@sfu.ca
+#SBATCH --time=0-0:30:00     		# DD-HH:MM:SS
+#SBATCH --mail-user=jilliana@sfu.ca
 #SBATCH --mail-type=ALL
+#SBATCH --account=def-jilliana
 
 # Prepare Environment
-module load python/3.7
+module load python/3.7 gcc/9.3.0 arrow/2.0.0 cuda cudnn
+source config-env.sh
 
-#pip install geopandas # For Post-Processing
-source ../tensorflow/bin/activate
-#source ../corm_predict_env/bin/activate
-module load python/3.7 protobuf gcc/9.3.0 arrow/2.0.0 cuda cudnn
-# pip install tensorflow protobuf Cython pycocotools --no-index
-# pip install tf-models-official==2.5.1
+source $ENVDIR/bin/activate && \
+echo && echo Activated environment "$NAME"
 
-cd ../models/research
-# python -m pip install --user .
-cd ../../workspace
-# pip install numpy --upgrade 
-# pip install pandas==1.3 --no-index
+export LOGSDIR="$WORKSPACE/logs_$SLURM_JOB_ID" && \
+mkdir -p $LOGSDIR
 
 # User defined variables
-TASK_PATH="2023/SNB_Span2-Ishan/01_Jan/SNB_2023-01-05/"
-# IMAGE="../../../../../../../CormorantNestingBC/2022-06-04_SNB_Span_2_Panorama.tif"
-IMAGE="../../../../../../../CormorantNestingBC/2021-05-05_Marina_Panoramas.tif"
+TASK_PATH="2020/VALIDATION/SNB6_cn_v1/06_June/SNB_20200626"
+IMAGE="~/projects/ctb-ruthjoy/CormorantNestingBC/2020-SNB-TIFs/SNB_26062020_71316x34752.tif"
 TILE_SIZE=1000
-TRAINED_MODEL=../../../../exported_models/snb3/centernet_resnet101_512/v1/
-# TRAINED_MODEL=../../../../models/snb6/centernet_resnet101_512/vIS/
-MASK_FILEPATH=
+# TRAINED_MODEL=../../../../exported_models/snb6/centernet_resnet101_512/v1/
+TRAINED_MODEL=$WORKSPACE/exported_models/snb6/centernet_resnet101_512/v1/
+
+REPO=cormorants-nesting-scripts
+PIPELINE=$WORKSPACE/$REPO/object_detection_scripts
 
 # Move to the correct starting point
-cd cormorants-nesting-scripts/object_detection_scripts/
+# cd cormorants-nesting-scripts/object_detection_scripts/
+cd $PIPELINE
 
 # Tile Image 
-cd tile_tifs/src
-python3 tile_tif.py --in_file "$IMAGE" --out_dir ../output/$TASK_PATH/ --tile_height $TILE_SIZE --tile_width $TILE_SIZE
+cd $PIPELINE/tile_tifs
+python src/tile_tif.py --in_file "$IMAGE" --out_dir output/$TASK_PATH/ --tile_height $TILE_SIZE --tile_width $TILE_SIZE
 
 # Run Model
-cd ../../predict/src/
-python3.7 predict.py --tiles ../../tile_tifs/output/$TASK_PATH --exported_model $TRAINED_MODEL --out_dir ../output/$TASK_PATH/ --box_thresh 0.1
+cd $PIPELINE/predict
+python src/predict.py --tiles $PIPELINE/tile_tifs/output/$TASK_PATH --exported_model $TRAINED_MODEL --out_dir output/$TASK_PATH/ --box_thresh 0.1
 
 # Post Process Model Results
 #cd ../../post_process_detections/src/
+# cd $PIPELINE/post_process_detections
 #python3 post_process.py --detections_file ../../predict/src/output/$TASK_PATH/detections.csv --out_file ../output/$TASK_PATH/detections_pp3.cs --mask_file ../input/$TASK_PATH/mask.csv
 
+# Remove Temporary Files
+#rm ../../tile_tifs/out/$TASK_PATH/*jpg
+
 # Write Script to Output
-cat ../../../../run_model_on_new_pano.sh > ../output/$TASK_PATH/script.log
+# cat ../../../../JA_run_model_on_new_pano.sh > ../output/$TASK_PATH/script.bak.log
+cat $WORKSPACE/run_model_on_new_pano.sh > output/$TASK_PATH/script.bak.log
+
+
+full_path=$(realpath $0) # $0 is the name of the current script as it was executed
+
+OUTPUT_FILE=output/$TASK_PATH/script.log
+touch $OUTPUT_FILE
+(echo && echo ) >> $OUTPUT_FILE
+
+printenv | grep -E 'NAME|ENVDIR|DEPS|LOGSDIR|SCRATCH|PROJECT|WORKSPACE|TF_MODEL_GARDEN|TF_OBJ_DET|TFHUB_CACHE_DIR' \
+  >> $OUTPUT_FILE
+
+(echo && echo && \
+echo "==============================================" && \
+echo && echo ) >> $OUTPUT_FILE
+
+cat full_path >> $OUTPUT_FILE
+
+cp $OUTPUT_FILE $LOGSDIR/ 
+
+
+
