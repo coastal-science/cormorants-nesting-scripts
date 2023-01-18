@@ -12,7 +12,7 @@ module load python/3.7 gcc/9.3.0 arrow/2.0.0 cuda/11.0 cudnn/8.0.3
 source config-env.sh
 # source ../tensorflow-scratch/bin/activate
 source $ENVDIR/bin/activate && \
-echo && echo Activated environment "$NAME"
+echo && echo "LOG STATUS: Activated environment ""$NAME"
 
 export LOGSDIR="$WORKSPACE/logs_$SLURM_JOB_ID" && \
 mkdir -p $LOGSDIR
@@ -84,20 +84,29 @@ python $TF_OBJ_DET/model_main_tf2.py \
 # Write Script to Output
 cat train.sh > $MODELDIR/script.bak.log
 
+# Write module list, environment varibles and script to output
 full_path=$(realpath $0) # $0 is the name of the current script as it was executed
 
-touch $MODELDIR/script.log
-(echo && echo ) >> $MODELDIR/script.log
+OUTPUT_FILE=$MODELDIR/script.log
+touch $OUTPUT_FILE
 
-printenv | grep -E 'NAME|ENVDIR|DEPS|LOGSDIR|SCRATCH|PROJECT|WORKSPACE|TF_MODEL_GARDEN|TF_OBJ_DET|TFHUB_CACHE_DIR' \
-  >> $MODELDIR/script.log 
+echo > $OUTPUT_FILE
 
-(echo && echo && \
-echo "==============================================" && \
-echo && echo ) >> $MODELDIR/script.log
+section_break(){
+  (echo && echo && \
+  echo "==============================================" && \
+  echo && echo ) >> $MODELDIR/script.log
+}
+section_break
 
+# get environment variables that contain any of the following keywords
+printenv | grep -E 'NAME|ENVDIR|DEPS|LOGSDIR|SCRATCH|PROJECT|WORKSPACE|TF_MODEL_GARDEN|TF_OBJ_DET|TFHUB_CACHE_DIR|MODEL' \
+  >> $OUTPUT_FILE
 
-cat full_path >> $MODELDIR/script.log
-cp $MODELDIR/script.log $LOGSDIR/ 
+section_break
+echo >> $OUTPUT_FILE
 
-echo Additional logs may be written to "$LOGSDIR"
+cat $full_path >> $OUTPUT_FILE
+cp $OUTPUT_FILE $LOGSDIR/ 
+
+echo Additional logs may be written to "$LOGSDIR" & echo

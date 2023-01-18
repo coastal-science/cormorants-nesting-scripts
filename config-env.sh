@@ -27,11 +27,12 @@ echo && echo The environment will be named: "$NAME"
 echo The logs are in "$LOGSDIR"
 echo 
 
-echo & echo "Complete environment creation in the $PROJECT and activate with $ virtualenv --no-download $ENVDIR && source $ENVDIR/bin/activate"
+echo & echo "Complete environment creation in the $PROJECT and activate with"
+echo "  $ virtualenv --no-download \$ENVDIR && source \$ENVDIR/bin/activate"
 # virtualenv --no-download $ENVDIR && source $ENVDIR/bin/activate
 
-echo & echo "Remove environment with $ deactive && rm -rf $ENVDIR"
-echo "Remove remnant directories with $ rm $LOGSDIR"
+echo "      - Remove the environment with $ deactivate && rm -rf \$ENVDIR"
+echo "      - Remove remnant directories with $ rm \$LOGSDIR"
 # rm -rf $ENVDIR
 # rm $LOGSDIR
 
