@@ -18,8 +18,9 @@ export LOGSDIR="$WORKSPACE/logs_$SLURM_JOB_ID" && \
 mkdir -p $LOGSDIR
 
 # User defined variables
-TASK_PATH="2020/VALIDATION/SNB6_cn_v1/06_June/SNB_20200626"
-IMAGE="~/projects/ctb-ruthjoy/CormorantNestingBC/2020-SNB-TIFs/SNB_26062020_71316x34752.tif"
+TASK_PATH="2024/VALIDATION/SNB6_cn_v1/06_June/SNB_20200626"
+IMAGE=~/projects/ctb-ruthjoy/CormorantNestingBC/2020-SNB-TIFs/SNB_26062020_71316x34752.tif
+IMAGE=$(realpath $IMAGE)
 TILE_SIZE=1000
 # TRAINED_MODEL=../../../../exported_models/snb6/centernet_resnet101_512/v1/
 TRAINED_MODEL=$WORKSPACE/exported_models/snb6/centernet_resnet101_512/v1/
