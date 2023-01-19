@@ -5,7 +5,7 @@
 #SBATCH --time=0-0:30:00     		# DD-HH:MM:SS
 #SBATCH --mail-user=isahay@sfu.ca
 #SBATCH --mail-type=ALL
-#SBATCH --account=def-isahay
+#SBATCH --account=def-avassile
 
 # Prepare Environment
 module load python/3.7 gcc/9.3.0 arrow/2.0.0 cuda cudnn
@@ -46,12 +46,11 @@ python src/predict.py --tiles $PIPELINE/tile_tifs/output/$TASK_PATH --exported_m
 echo "LOG STATUS: Completed predictions"
 
 # Post Process Model Results
-#cd ../../post_process_detections/src/
 # cd $PIPELINE/post_process_detections
-#python3 post_process.py --detections_file ../../predict/src/output/$TASK_PATH/detections.csv --out_file ../output/$TASK_PATH/detections_pp3.cs --mask_file ../input/$TASK_PATH/mask.csv
+# python3 $PIPELINE/post_process.py --detections_file $PIPELINE/predict/src/output/$TASK_PATH/detections.csv --out_file $PIPELINE/output/$TASK_PATH/detections_pp2.csv --mask_file $PIPELINE/input/$TASK_PATH/mask.csv
 
 # Remove Temporary Files
-#rm ../../tile_tifs/out/$TASK_PATH/*jpg
+rm $PIPELINE/tile_tifs/output/$TASK_PATH/*jpg
 
 # Write Script to Output
 echo "LOG STATUS: Saving output and logs"
@@ -76,7 +75,7 @@ section_break(){
 }
 section_break $OUTPUT_FILE
 
-# get environment variables that contain any of the following keywords
+# get environment variables that partially contain any of the following keywords
 printenv | grep -E 'NAME|ENVDIR|DEPS|LOGSDIR|SCRATCH|PROJECT|WORKSPACE|TF_MODEL_GARDEN|TF_OBJ_DET|TFHUB_CACHE_DIR' \
   >> $OUTPUT_FILE
 
