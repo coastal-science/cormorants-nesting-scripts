@@ -27,7 +27,7 @@ echo && echo The environment will be named: "$NAME"
 echo The logs are in "$LOGSDIR"
 echo 
 
-echo & echo "Complete environment creation in the $PROJECT and activate with"
+echo & echo "Complete the environment creation ($PROJECT) and activate with"
 echo "  $ virtualenv --no-download \$ENVDIR && source \$ENVDIR/bin/activate"
 # virtualenv --no-download $ENVDIR && source $ENVDIR/bin/activate
 

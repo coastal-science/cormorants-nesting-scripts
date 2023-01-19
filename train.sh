@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --gres=gpu:1       		# Request GPU "generic resources"
+#SBATCH --gpus-per-node=1     # Request GPU "generic resources"
 #SBATCH --cpus-per-task=2  		# Look at Cluster docs for CPU/GPU ratio 
-#SBATCH --mem=32G       		# Memory proportional to GPUs: 32000 Cedar
-#SBATCH --time=0-8:00:00     		# DD-HH:MM:SS
+#SBATCH --mem=32G       		  # Memory proportional to GPUs: 32000 Cedar
+#SBATCH --time=0-6:00:00      # DD-HH:MM:SSs
 #SBATCH --mail-user=isahay@sfu.ca
 #SBATCH --mail-type=ALL
 #SBATCH --account=def-avassile
@@ -44,8 +44,7 @@ cd $WORKSPACE
 #MODELDIR=models/snb5/centernet_resnet101_512/v2
 #MODELDIR=models/snb5/ssd_resnet50_1024/v2
 #MODELDIR=models/snb5/ssd_resnet50_1024/v4
-MODELDIR=models/snb6/ssd_resnet50_1024/v1
-MODELDIR=$WORKSPACE/models/snb6/centernet_resnet101_512/v-IS
+MODELDIR=$WORKSPACE/models/snb6/ssd_resnet50_1024/v1
 
 
 # Test the Tensorflow Installation
@@ -53,8 +52,8 @@ MODELDIR=$WORKSPACE/models/snb6/centernet_resnet101_512/v-IS
 echo && echo "LOG STATUS: Testing Object Detection Model"
 
 # cd $TF_MODEL_GARDEN/models/research
-# python object_detection/builders/model_builder_tf2_test.py | tee $LOGSDIR/test-tf-od.log
-python $TF_OBJ_DET/builders/model_builder_tf2_test.py #| tee $LOGSDIR/test-tf-od.log
+# python object_detection/builders/model_builder_tf2_test.py
+python $TF_OBJ_DET/builders/model_builder_tf2_test.py
 
 # Tensorboard
 echo && echo "LOG STATUS: Launching Tensorboard"
@@ -73,7 +72,7 @@ python $TF_OBJ_DET/model_main_tf2.py \
 # Start the evaluator Script
 echo && echo "LOG STATUS: Start Validation"
 
-# export CUDA_VISIBLE_DEVICES=-1
+export CUDA_VISIBLE_DEVICES=-1
 python $TF_OBJ_DET/model_main_tf2.py \
   --pipeline_config_path=$MODELDIR/pipeline.config \
   --model_dir=$MODELDIR \
@@ -84,29 +83,34 @@ python $TF_OBJ_DET/model_main_tf2.py \
 # Write Script to Output
 cat train.sh > $MODELDIR/script.bak.log
 
-# Write module list, environment varibles and script to output
-full_path=$(realpath $0) # $0 is the name of the current script as it was executed
-
-OUTPUT_FILE=$MODELDIR/script.log
-touch $OUTPUT_FILE
-
-echo > $OUTPUT_FILE
-
 section_break(){
   (echo && echo && \
   echo "==============================================" && \
   echo && echo ) >> $MODELDIR/script.log
 }
-section_break
 
-# get environment variables that contain any of the following keywords
-printenv | grep -E 'NAME|ENVDIR|DEPS|LOGSDIR|SCRATCH|PROJECT|WORKSPACE|TF_MODEL_GARDEN|TF_OBJ_DET|TFHUB_CACHE_DIR|MODEL' \
-  >> $OUTPUT_FILE
+progress(){
+  # Write module list, environment varibles and script to output
+  full_path=$(realpath $0) # $0 is the name of the current script as it was executed
 
-section_break
-echo >> $OUTPUT_FILE
+  OUTPUT_FILE=$MODELDIR/script.log
+  touch $OUTPUT_FILE
 
-cat $full_path >> $OUTPUT_FILE
-cp $OUTPUT_FILE $LOGSDIR/ 
+  echo > $OUTPUT_FILE
 
-echo Additional logs may be written to "$LOGSDIR" & echo
+  section_break
+
+  # get environment variables that partially contain any of the following keywords
+  printenv | grep -E 'NAME|ENVDIR|DEPS|LOGSDIR|SCRATCH|PROJECT|WORKSPACE|TF_MODEL_GARDEN|TF_OBJ_DET|TFHUB_CACHE_DIR|MODEL' \
+    >> $OUTPUT_FILE
+
+  section_break
+  echo >> $OUTPUT_FILE
+
+  cat $full_path >> $OUTPUT_FILE
+  cp $OUTPUT_FILE $LOGSDIR/ 
+
+  echo Additional logs may be written to "$LOGSDIR" & echo
+}
+
+progress
