@@ -1,11 +1,13 @@
 #!/bin/bash
 
-YEAR_DIR="../input/2021_SNB/TEST/*"
-OUT_DIR="../output/SNB_2021/TEST/"
+YEAR_DIR="../input/2020_SNB/VALIDATION/*"
+OUT_DIR="../output/SNB_2020/VALIDATION/PP2/"
 for d in $YEAR_DIR ; do
     DNAME=$(basename -- $d)
     python3 post_process.py \
-      --detections_file $YEAR_DIR$DNAME/snb3v1/detections.csv \
-      --mask_file $YEAR_DIR$DNAME/span2_bridge_mask.csv \
-      --out_file $OUT_DIR${DNAME}_snb3_v1_detections_pp3.csv
+      --detections_file $d/snb6_cn_v1/detections.csv \
+      --mask_file $d/span2_mask.csv \
+      --original_pano $d/original-pano.tif \
+      --tile_size 1000 \
+      --out_file $OUT_DIR${DNAME}_snb6_cn_v1_detections_pp2.csv
 done
