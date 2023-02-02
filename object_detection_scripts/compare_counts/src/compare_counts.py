@@ -81,13 +81,16 @@ def rmse_plots(detections_dir, file_map_path, out_path, true_counts_csv=None, th
                     variables.append(g)
                     rmses.append(rmse)
                     detection_methods.append(c)
+
             rmse_df = pd.concat([rmse_df,
                                  pd.DataFrame({'DetectionMethod': detection_methods,
                                                'Variable': variables,
                                                'ConfidenceThreshold': thresh,
                                                'RMSE': rmses
                                                })],
-                                ignore_index=True)
+                                ignore_index=True).drop_duplicates()
+
+    rmse_df.to_csv(Path(out_path).parent.joinpath("rmse.csv"), index=False)
     sns.relplot(data=rmse_df, x='ConfidenceThreshold', y='RMSE', hue='Variable',
                 col='DetectionMethod',  col_wrap=1, kind='line')
     plt.xlabel("Confidence Score Threshold")
@@ -156,7 +159,7 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
             except KeyError:
                 print("Found no Nest")
                 nest_counts.append(0)
-        print(len(dates), len(nest_counts), len(bird_counts))
+
         det_df = pd.DataFrame({'Date': dates,
                                 f'Nest @ {threshold[1]}': nest_counts,
                                 f'Cormorant @ {threshold[0]}': bird_counts})
@@ -164,6 +167,7 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
         counts = counts.merge(melted, on=['Date', 'variable'], how='inner')
 
     data = counts.melt(id_vars=['Date', 'variable'], var_name='method')
+    data.to_csv(Path(out_path).parent.joinpath("counts.csv"), index=False)
 
     # Plot
     if len(file_map) == 1:
