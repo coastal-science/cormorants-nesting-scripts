@@ -3,7 +3,6 @@
 #SBATCH --cpus-per-task=6   	# Look at Cluster docs for CPU/GPU ratio 
 #SBATCH --mem=32000M     		  # Memory proportional to GPUs: 32000 Cedar
 #SBATCH --time=0-6:00:00      # DD-HH:MM:SSs
-#SBATCH --mail-user=isahay@sfu.ca
 #SBATCH --mail-type=ALL
 
 # Load functions
