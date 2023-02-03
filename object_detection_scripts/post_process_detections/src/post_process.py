@@ -27,9 +27,11 @@ import pandas as pd
 import geopandas as gpd
 import shapely
 from pathlib import Path
+from PIL import Image
 
 from shapely.geometry import Polygon, box
 import ast
+Image.MAX_IMAGE_PIXELS = 3000000000
 
 
 def find_full_canvas_dims(df):
@@ -66,7 +68,7 @@ def tiles_share_edge(tile1, tile2):
     return False
 
 
-def load_mask(f, resize_dims=(0, 0)):
+def load_mask(f, resize_dims=(74.576, 33.620)):
     df = pd.read_csv(f)
     print(f"Loading mask for {df['img.img_path'].iloc[0]}")
     mask_points = [(d['x'], d['y']) for d in ast.literal_eval(df['anno.data'].iloc[0])]
@@ -75,18 +77,18 @@ def load_mask(f, resize_dims=(0, 0)):
     return mask_geom
 
 
-def find_duplicate_detection_indices(df):
+def find_duplicate_detection_indices(to_process_df):
     # Create Geometries
     # (1) Tiles
-    df['tile'] = df['image'].apply(create_tile_geom)
+    to_process_df['tile'] = to_process_df['image'].apply(create_tile_geom)
     # (3) Detections
     box_geoms = []
-    for image, det_box in zip(df['image'], df['detection_boxes']):
+    for image, det_box in zip(to_process_df['image'], to_process_df['detection_boxes']):
         box_geoms.append(create_detection_geom(image, ast.literal_eval(det_box)))
-    df['detection_box_geom'] = box_geoms
+    to_process_df['detection_box_geom'] = box_geoms
 
     # Cross Merge
-    cross0 = df.merge(right=df, how='cross')
+    cross0 = to_process_df.merge(right=to_process_df, how='cross')
     cross = cross0[cross0['index_x'] < cross0['index_y']]
 
     # Filter the Cross Merge
@@ -125,8 +127,9 @@ def remove_duplicate_nests(df):
     return no_duplicates
 
 
-def apply_mask(mask_file, df):
-    resize_dims = find_full_canvas_dims(df)
+def apply_mask(mask_file, original_pano, tile_size, df):
+    im_w, im_h = Image.open(original_pano).size
+    resize_dims = (im_w/tile_size, im_h/tile_size)
 
     mask = load_mask(mask_file, resize_dims)
 
@@ -135,7 +138,9 @@ def apply_mask(mask_file, df):
         box_geoms.append(create_detection_geom(image, ast.literal_eval(det_box)))
     df['detection_box_geom'] = box_geoms
 
-    masked_df = df[gpd.GeoSeries(df['detection_box_geom']).intersects(mask)]
+    gs = gpd.GeoSeries(df['detection_box_geom'])
+    gs_rescaled = gs.scale(xfact=0.5, yfact=0.5)
+    masked_df = df[gs_rescaled.intersects(mask)]
 
     return masked_df
 
@@ -164,30 +169,32 @@ def birds_in_nests(df):
     return df.drop(out_of_nest_idx)
 
 
-def main(detection_csv, mask_file, out_file):
-    df = pd.read_csv(detection_csv)                                     # 258   270
-    df = remove_nan_detections(df)                                      # 258   270
-    original_len = len(df)
-    df = apply_mask(mask_file, df)                                      # 246   257
-    post_mask_len = len(df)
-    df = birds_in_nests(df)
-    post_bin_len = len(df)
-    df = remove_duplicate_nests(df)         # 246   199
-    post_ddup_len = len(df)
-    df.to_csv(out_file, index=False)
+def main(detection_csv, mask=False, deduplicate_nests=False,
+         mask_file='', original_pano='', tile_size=1000, out_file=''):
+    df = pd.read_csv(detection_csv)
+    df = remove_nan_detections(df)
 
-    print(f"Masking removed {original_len - post_mask_len} detections ")
-    print(f"BirdsInNest removed {post_mask_len - post_bin_len} detections ")
-    print(f"Nest Deduplication removed {post_bin_len - post_ddup_len} detections ")
+    if mask:
+        print("Applying Mask...")
+        df = apply_mask(mask_file, original_pano, tile_size, df)
+
+    if deduplicate_nests:
+        print("Removing Duplicate Nests...")
+        df = remove_duplicate_nests(df)
+
+    df.to_csv(out_file, index=False)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--detections_file', help='.', type=str)
-    parser.add_argument('--mask_file', help='.', type=str)
-    parser.add_argument('--out_file', help='.', type=str)
+    parser.add_argument('--mask', help='.', action='store_true')
+    parser.add_argument('--deduplicate_nests', help='.', action='store_true')
+    parser.add_argument('--detections_file', help='.', type=str, required=True)
+    parser.add_argument('--original_pano', help='.', type=str, required=True)
+    parser.add_argument('--tile_size', help='.', type=int, required=True)
+    parser.add_argument('--out_file', help='.', type=str, required=True)
+    parser.add_argument('--mask_file', help='Use this', type=str)
     args = parser.parse_args()
 
-    main(args.detections_file, args.mask_file, args.out_file)
-
-# TODO: Deal with the end tiles not technically being the right size in the detections -- we need to do the calculation properly
+    main(args.detections_file, args.mask, args.deduplicate_nests,
+         args.mask_file, args.original_pano, args.tile_size, args.out_file)
