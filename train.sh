@@ -1,20 +1,22 @@
 #!/bin/bash
-#SBATCH --gpus-per-node=1     # Request GPU "generic resources"
-#SBATCH --cpus-per-task=2  		# Look at Cluster docs for CPU/GPU ratio 
-#SBATCH --mem=32G       		  # Memory proportional to GPUs: 32000 Cedar
+#SBATCH --gpus-per-node=2     # Request GPU "generic resources"
+#SBATCH --cpus-per-task=6   	# Look at Cluster docs for CPU/GPU ratio 
+#SBATCH --mem=32000M     		  # Memory proportional to GPUs: 32000 Cedar
 #SBATCH --time=0-6:00:00      # DD-HH:MM:SSs
 #SBATCH --mail-user=isahay@sfu.ca
 #SBATCH --mail-type=ALL
-#SBATCH --account=def-avassile
+
+# Load functions
+. utils.sh # progress()
 
 # Prepare Environment
 module load python/3.7 gcc/9.3.0 arrow/2.0.0 cuda/11.0 cudnn/8.0.3
 source config-env.sh
 # source ../tensorflow-scratch/bin/activate
-source $ENVDIR/bin/activate && \
+source ${ENVDIR}/bin/activate && \
 echo && echo "LOG STATUS: Activated environment ""$NAME"
 
-export LOGSDIR="$WORKSPACE/logs_$SLURM_JOB_ID" && \
+export LOGSDIR="${WORKSPACE}/logs_${SLURM_JOB_ID}" && \
 mkdir -p $LOGSDIR
 
 # pip install tensorflow protobuf Cython pycocotools --no-index
@@ -29,7 +31,7 @@ cd $WORKSPACE
 
 #Choose a Model
 #MODELDIR=models/gab1/centernet_hourglass_1024/v1
-#iMODELDIR=models/gab1/centernet_mobilenet_512/v1
+#MODELDIR=models/gab1/centernet_mobilenet_512/v1
 #MODELDIR=models/gab1/centernet_resnet101_512/v1
 #MODELDIR=models/gab1/centernet_resnet101_512/v2
 #MODELDIR=models/gab2/centernet_resnet101_512/v1
@@ -38,14 +40,21 @@ cd $WORKSPACE
 #MODELDIR=models/gab2/efficientdet_d0/v2
 #MODELDIR=models/gab2/efficientdet_d4/v1
 #MODELDIR=models/gab3/centernet_resnet101_512/v1
-#Modeldir=models/gab3/centernet_resnet101_512/v2
+#MODELDIR=models/gab3/centernet_resnet101_512/v2
 #MODELDIR=models/gab3/centernet_resnet101_512/v3
 #MODELDIR=models/snb5/centernet_resnet101_512/v1
 #MODELDIR=models/snb5/centernet_resnet101_512/v2
 #MODELDIR=models/snb5/ssd_resnet50_1024/v2
 #MODELDIR=models/snb5/ssd_resnet50_1024/v4
 MODELDIR=$WORKSPACE/models/snb6/ssd_resnet50_1024/v1
+MODELDIR=$WORKSPACE/models/snb6/ssd_resnet50_1024/v3-Overfit
+MODELDIR=$WORKSPACE/models/snb6/ssd_resnet50_1024/v4
+MODELDIR=$WORKSPACE/models/snb6/ssd_resnet50_1024/v5
+MODELDIR=$WORKSPACE/models/snb6/ssd_resnet50_1024/v7
+MODELDIR=$WORKSPACE/models/snb6/ssd_resnet50_1024/v8-b
 
+# Write Script and Job details to file
+progress $MODELDIR $LOGSDIR
 
 # Test the Tensorflow Installation
 # python ../models/research/object_detection/builders/model_builder_tf2_test.py
@@ -82,35 +91,3 @@ python $TF_OBJ_DET/model_main_tf2.py \
 
 # Write Script to Output
 cat train.sh > $MODELDIR/script.bak.log
-
-section_break(){
-  (echo && echo && \
-  echo "==============================================" && \
-  echo && echo ) >> $MODELDIR/script.log
-}
-
-progress(){
-  # Write module list, environment varibles and script to output
-  full_path=$(realpath $0) # $0 is the name of the current script as it was executed
-
-  OUTPUT_FILE=$MODELDIR/script.log
-  touch $OUTPUT_FILE
-
-  echo > $OUTPUT_FILE
-
-  section_break
-
-  # get environment variables that partially contain any of the following keywords
-  printenv | grep -E 'NAME|ENVDIR|DEPS|LOGSDIR|SCRATCH|PROJECT|WORKSPACE|TF_MODEL_GARDEN|TF_OBJ_DET|TFHUB_CACHE_DIR|MODEL' \
-    >> $OUTPUT_FILE
-
-  section_break
-  echo >> $OUTPUT_FILE
-
-  cat $full_path >> $OUTPUT_FILE
-  cp $OUTPUT_FILE $LOGSDIR/ 
-
-  echo Additional logs may be written to "$LOGSDIR" & echo
-}
-
-progress
