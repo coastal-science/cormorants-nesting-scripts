@@ -57,7 +57,7 @@ def tile_image(image, tile_height, tile_width, out_dir, out_extension):
 
 def tile_single_tif(file_path, tile_height, tile_width, out_dir, out_extension='JPG'):
     # Open Image
-    image = Image.open(file_path)
+    image = Image.open(file_path.resolve())
 
     # Tile Image
     tile_image(image,
@@ -68,7 +68,7 @@ def tile_single_tif(file_path, tile_height, tile_width, out_dir, out_extension='
 
 
 def tile_all_tifs(directory, tile_height, tile_width, out_directory, out_extension='JPG'):
-    all_tifs = directory.glob("*.tif")
+    all_tifs = directory.resolve().glob("*.tif")
     for tif in all_tifs:
         # Open Image
         image = Image.open(tif)
