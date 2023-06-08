@@ -256,6 +256,8 @@ if __name__ == '__main__':
     parser.add_argument('--splits', nargs='+', type=float, help='.')
     args = parser.parse_args()
 
+    Path(args.out_path).mkdir(exist_ok=True)
+
     lost_to_tfrecord(image_directory=Path(args.img_dir),
                      annotation_file=Path(args.anno_file),
                      split_ratios=tuple(args.splits),
