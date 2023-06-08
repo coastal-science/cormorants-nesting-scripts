@@ -17,7 +17,6 @@ python3 compare_counts.py \
   --threshold "{0.0: 0.2, 1.0:0.4}"
 """
 import argparse
-import pdb
 
 import pandas as pd
 import seaborn as sns
@@ -33,10 +32,19 @@ label_map = {0.0: 'Cormorant',
              'Cormorant': 0.1,
              'Nest': 0.0}
 
+palette_map = {
+    'Manual': '#fc8d59',                                # orange
+    'Model': "#2c7bb6",                                 # darkest blue
+    'Model + PP1': "#8fc0e3",                           # med-light blue
+    'Model + PP2': "#abd9e9",                           # light blue
+    'Model + Masking + Nest Deduplication': "#abd9e9",  # light blue
+}
 
-def rmse_plots(detections_dir, file_map_path, out_path, true_counts_csv=None, threshold=None):
+
+def rmse_plots(detections_dir, file_map_path, out_path, save_csv=False, true_counts_csv=None,
+               threshold=None):
     if not threshold:
-        threshold = list(np.arange(0, 1, 0.05,))
+        threshold = list(np.arange(0, 1, 0.05, ))
 
     with open(Path(file_map_path)) as f:
         file_map = json.load(f)
@@ -90,17 +98,20 @@ def rmse_plots(detections_dir, file_map_path, out_path, true_counts_csv=None, th
                                                })],
                                 ignore_index=True).drop_duplicates()
 
-    rmse_df.to_csv(Path(out_path).parent.joinpath("rmse.csv"), index=False)
     sns.relplot(data=rmse_df, x='ConfidenceThreshold', y='RMSE', hue='Variable',
-                col='DetectionMethod',  col_wrap=1, kind='line')
+                col='DetectionMethod', col_wrap=1, kind='line')
     plt.xlabel("Confidence Score Threshold")
     plt.ylabel("RMSE")
     plt.ylim(0, )
     sns.despine()
     plt.savefig(out_path)
 
+    if save_csv:
+        rmse_df.to_csv(Path(out_path).parent.joinpath("rmse.csv"), index=False)
 
-def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=None, threshold=0.5):
+
+def raw_count_plots(detections_dir, file_map_path, out_path, save_csv=False, true_counts_csv=None,
+                    threshold=0.5):
     # Threshold
     threshold = literal_eval(threshold)
     if isinstance(threshold, float):
@@ -113,26 +124,16 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
 
     # True Counts
     if true_counts_csv is not None:
-        # vNEWv
         true_counts = pd.read_csv(true_counts_csv)
         true_counts = true_counts[['Date', 'Nest', 'Cormorant']]
         true_counts.columns = ['Date', f"Nest @ {threshold[1]}", f"Cormorant @ {threshold[0]}"]
         counts = true_counts.melt(id_vars='Date', var_name='variable', value_name='Manual')
-        # ^NEW^
-        # vOLDv
-        # true_counts = pd.read_csv(true_counts_csv, header=1).set_index(
-        #     'date').transpose().rename_axis(
-        #     'date').reset_index()
-        # true_counts = true_counts[['date', 'Nest', 'Cormorant']]
-        # true_counts.columns = ['Date', f"Nest @ {threshold[1]}", f"Cormorant @ {threshold[0]}"]
-        # counts = true_counts.melt(id_vars='Date', var_name='variable', value_name='Manual')
-        # ^OLD^
-        # original_columns = counts.columns
+
     else:
         dates_df = pd.DataFrame({'Date': list(list(file_map.values())[0].keys())})
-        var_df = pd.DataFrame({'variable': [f"Nest @ {threshold[1]}", f"Cormorant @ {threshold[0]}"]})
+        var_df = pd.DataFrame(
+            {'variable': [f"Nest @ {threshold[1]}", f"Cormorant @ {threshold[0]}"]})
         counts = pd.merge(dates_df, var_df, how='cross')
-        # original_columns = counts.columns
 
     for detection_set in file_map:
         dates = []
@@ -161,58 +162,40 @@ def raw_count_plots(detections_dir, file_map_path, out_path, true_counts_csv=Non
                 nest_counts.append(0)
 
         det_df = pd.DataFrame({'Date': dates,
-                                f'Nest @ {threshold[1]}': nest_counts,
-                                f'Cormorant @ {threshold[0]}': bird_counts})
+                               f'Nest @ {threshold[1]}': nest_counts,
+                               f'Cormorant @ {threshold[0]}': bird_counts})
         melted = det_df.melt(id_vars='Date', value_name=detection_set)
         counts = counts.merge(melted, on=['Date', 'variable'], how='inner')
 
     data = counts.melt(id_vars=['Date', 'variable'], var_name='method')
-    data.to_csv(Path(out_path).parent.joinpath("counts.csv"), index=False)
+
+    # Write Data to CSV
+    if save_csv:
+        csv_path = Path(out_path).parent.joinpath("counts.csv")
+        data.to_csv(csv_path, index=False)
 
     # Plot
-    if len(file_map) == 1:
-        g = sns.catplot(data=data, x='Date', y='value', col='variable',
-                        kind='bar', col_wrap=1, sharex=False,
-                        hue='method',
-                        palette=[
-                            # '#fc8d59',
-                            '#abd9e9'
-                        ],
-                        legend_out=False,
-                        )
-    else:
-        g = sns.catplot(data=data, x='Date', y='value',
-                        hue='method',
-                        col='variable',
-                        kind='bar',
-                        palette=[
-                            '#fc8d59',
-                            # "#2c7bb6",
-                            "#5c9dcd",
-                            "#8fc0e3",
-                            "#abd9e9",
-                        ],
-                        col_wrap=1, sharex=False,
-                        legend_out=False,
-                        )
+    g = sns.catplot(data=data, x='Date', y='value', col='variable',
+                    kind='bar', col_wrap=1, sharex=False,
+                    hue='method',
+                    palette=palette_map,
+                    legend_out=False,
+                    )
+
     (g.set_axis_labels("", "Raw Counts")
-      .set_titles("{col_name}")
-      .despine())
+     .set_titles("{col_name}")
+     .despine())
     plt.xticks(rotation=0)
-    # plt.legend(loc='upper right')
-    # sns.move_legend(g, "upper center", bbox_to_anchor=(0.5, 0.8), title='Count Method', orient='h')
-    # g.fig.suptitle('ONE TITLE FOR ALL')
     sns.despine()
-    plt.gcf().set_size_inches(15, 10)
+    plt.gcf().set_size_inches(25, 10)
     plt.savefig(out_path, dpi=600)
 
 
 if __name__ == '__main__':
-
     function_map = {
-                     'rmse': rmse_plots,
-                     'counts': raw_count_plots
-                     }
+        'rmse': rmse_plots,
+        'counts': raw_count_plots
+    }
 
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--true_counts', help='.')
@@ -221,16 +204,17 @@ if __name__ == '__main__':
     parser.add_argument('--out_path', help='.')
     parser.add_argument('--plot_type')
     parser.add_argument('--threshold', help='.')
+    parser.add_argument('--save_raw_csv', help='.', action='store_true')
 
     args = parser.parse_args()
 
+    # Make sure the output directory exists
+    Path(args.out_path).parent.mkdir(parents=True, exist_ok=True)
+
+    # Create the graphs
     function_map[args.plot_type](args.detections_dir,
                                  args.file_map,
                                  args.out_path,
+                                 args.save_raw_csv,
                                  args.true_counts,
                                  args.threshold)
-
-
-
-
-

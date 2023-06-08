@@ -1,13 +1,20 @@
 #!/bin/bash
+# Example bash script that can be used to create a pair of RMSE & count comparison charts.
 
-IN_DIR="../input/SNB_2020/VALIDATION/"
-DETECTIONS="snb6_cn_v1_detections"
-FILEMAP="snb6_cn_v1_file_map.json"
-OUT_DIR="../output/SNB_2020/VALIDATION/snb6_cn_v1"
+# **********************
+# User-Defined Variables
+# **********************
+# Input Variables
+IN_DIR="../input/SNB_2021/TEST-COUNTS"
+DETECTIONS="snb5_cn_hg_v9_detections"
+FILEMAP="snb5_cn_hg_v9_file_map.json"
+# Processing Variables
+THRESH_CORM=0.2 # From SNB5 CN HG v9 on 2020
+THRESH_NEST=0.2 # FROM SNB5 CN HG v9 on 2020
+# Output Variables
+OUT_DIR="../output/SNB_2021/TEST-COUNTS/snb5_cn_hg_TEST"
 RMSE_FILE='rmse.png'
 COUNTS_FILE='counts.png'
-THRESH_CORM=0.35
-THRESH_NEST=0.20
 
 echo "Creating RMSE Plot & CSV..."
 python3 compare_counts.py \
@@ -15,7 +22,8 @@ python3 compare_counts.py \
 --detections_dir $IN_DIR/$DETECTIONS \
 --file_map $IN_DIR/$FILEMAP \
 --out_path $OUT_DIR/$RMSE_FILE \
---plot_type rmse
+--plot_type rmse \
+--save_raw_csv
 
 echo "Creating Count Plot & CSV..."
 python3 compare_counts.py \
