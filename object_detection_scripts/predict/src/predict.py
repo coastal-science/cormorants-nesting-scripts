@@ -6,6 +6,7 @@ python3 predict.py \
 --out_dir../output/SNB_2020/SNB_27052020/snb3_centernet101_512_v1-0.1
 --box_thresh 0.1
 --draw
+
 """
 import argparse
 from pathlib import Path
@@ -41,17 +42,14 @@ def detect_fn(image, detection_model):
     Returs:
       detections (dict): predictions that model made
     """
-
     image, shapes = detection_model.preprocess(image)
     prediction_dict = detection_model.predict(image, shapes)
     detections = detection_model.postprocess(prediction_dict, shapes)
-
     return detections
 
 
 def load_image_into_numpy_array(path):
     """Load an image from file into a numpy array.
-
     Puts image into numpy array to feed into tensorflow graph.
     Note that by convention we put it into a numpy array with shape
     (height, width, channels), where channels=3 for RGB.
@@ -72,9 +70,7 @@ def nms(rects, thd=0.5):
     thd - intersection threshold (intersection divides min square of rectange)
     """
     out = []
-
     remove = [False] * len(rects)
-
     for i in range(0, len(rects) - 1):
         if remove[i]:
             continue
@@ -83,7 +79,6 @@ def nms(rects, thd=0.5):
             if remove[j]:
                 continue
             inter[j] = intersection(rects[i][0], rects[j][0]) / min(square(rects[i][0]), square(rects[j][0]))
-
         max_prob = 0.0
         max_idx = 0
         for k in range(i, len(rects)):
@@ -91,15 +86,12 @@ def nms(rects, thd=0.5):
                 if rects[k][1] > max_prob:
                     max_prob = rects[k][1]
                     max_idx = k
-
         for k in range(i, len(rects)):
             if (inter[k] >= thd) & (k != max_idx):
                 remove[k] = True
-
     for k in range(0, len(rects)):
         if not remove[k]:
             out.append(rects[k])
-
     boxes = [box[0] for box in out]
     scores = [score[1] for score in out]
     classes = [cls[2] for cls in out]
@@ -265,6 +257,9 @@ if __name__ == '__main__':
     parser.add_argument('--out_dir', help='.')
     parser.add_argument('--box_thresh', help='.', type=float)
     parser.add_argument('--draw', action='store_true')
+
+    exported_model_dir=Path('exported_models/snb3/centernet_resnet101_512/v1')
+    tile_dir = Path('./cormorants-nesting-scripts/object_detection_scripts/tile_tifs/output/2022/SNB_2/04_April/77_20220407')
 
     args = parser.parse_args()
 
