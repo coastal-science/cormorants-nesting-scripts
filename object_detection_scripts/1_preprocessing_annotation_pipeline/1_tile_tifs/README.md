@@ -5,7 +5,6 @@ orthomosaic panoramas into smaller jpg tiles.
 **Table of Contents**
 * [Running `tile_tifs.py`](#running-tiletifspy)
   * [CLI Arguments](#cli-arguments)
-  * [Input](#input)
   * [Expected Output](#expected-output)
 * [Examples](#examples)
 
