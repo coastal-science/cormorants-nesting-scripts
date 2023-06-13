@@ -4,11 +4,13 @@ In this project, there was additional pre-processing work that needed to happen
 prior to annotation. This folder contains the code & documented needed to
 complete pre-processing and annotation.
 
+* [RAW to TIF](raw_to_tif) &mdash; most orthomosaics are exported as TIF images,
+  however occasionally they are exported as `RAW` images. These must be
+  converted into TIFs before you can proceed with tiling and annotation.
 * [Tile TIFs](tile_tifs) &mdash; large orthomosaic TIF images are divided into
   the tiles that will be annotated and used for training.
 * [Select Data]()
 * [Combine Annotation Labels]()
-* [RAW to TIF]()
 * [LOST Annotation]()
 * [Collect Annotation Pools]()
 
