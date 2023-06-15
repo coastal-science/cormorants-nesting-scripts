@@ -32,9 +32,10 @@ echo && echo "LOG STATUS: Activated environment ""$NAME"
 #MODELDIR=snb2/centernet_resnet101_512/v1
 #MODELDIR=snb3/centernet_resnet101_512/v1
 #MODELDIR=gab3/centernet_resnet101_512/v3
-#MODELDIR=snb5/centernet_resnet101_512/v1
-MODELDIR=snb6/ssd_resnet50_1024/v7
-MODELDIR=snb6/ssd_resnet50_1024/v8
+MODELDIR=snb5/centernet_resnet101_512/w4
+#MODELDIR=snb6/ssd_resnet50_1024/v7
+#MODELDIR=snb6/ssd_resnet50_1024/v8
+MODELDIR=snb5/centernet_hg104_512/v9
 
 # Export the model
 python $TF_OBJ_DET/exporter_main_v2.py \

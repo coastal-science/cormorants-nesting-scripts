@@ -2,7 +2,7 @@
 #SBATCH --gpus-per-node=2     # Request GPU "generic resources"
 #SBATCH --cpus-per-task=6   	# Look at Cluster docs for CPU/GPU ratio 
 #SBATCH --mem=32000M     		  # Memory proportional to GPUs: 32000 Cedar
-#SBATCH --time=0-6:00:00      # DD-HH:MM:SSs
+#SBATCH --time=0-2:00:00      # DD-HH:MM:SSs
 #SBATCH --mail-type=ALL
 
 # Load functions
@@ -51,6 +51,23 @@ MODELDIR=$WORKSPACE/models/snb6/ssd_resnet50_1024/v4
 MODELDIR=$WORKSPACE/models/snb6/ssd_resnet50_1024/v5
 MODELDIR=$WORKSPACE/models/snb6/ssd_resnet50_1024/v7
 MODELDIR=$WORKSPACE/models/snb6/ssd_resnet50_1024/v8-b
+
+MODELDIR=$WORKSPACE/models/snb6/efficientdet_d0_512/pv5
+
+MODELDIR=$WORKSPACE/models/snb5/efficientdet_d0_512/v2-overfit
+MODELDIR=$WORKSPACE/models/snb5/ssd_resnet50_1024/w6
+MODELDIR=$WORKSPACE/models/snb5/centernet_resnet101_512/w4
+#MODELDIR=$WORKSPACE/models/snb5/efficientdet_d0_512/v4
+#MODELDIR=$WORKSPACE/models/snb5/efficientdet_d0_512/v5
+#MODELDIR=$WORKSPACE/models/snb5/efficientdet_d0_512/v6
+MODELDIR=$WORKSPACE/models/snb5/efficientdet_d0_512/v7
+MODELDIR=$WORKSPACE/models/snb5/ssd_resnet50_1024/w8
+MODELDIR=$WORKSPACE/models/snb5/efficientdet_d0_512/v9
+MODELDIR=$WORKSPACE/models/snb5/ssd_resnet50_1024/w6b
+MODELDIR=$WORKSPACE/models/snb5/ssd_resnet50_1024/w6e
+# MODELDIR=$WORKSPACE/models/snb5/efficientdet_d0_512/v13
+
+
 
 # Write Script and Job details to file
 progress $MODELDIR $LOGSDIR

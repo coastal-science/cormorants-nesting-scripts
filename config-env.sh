@@ -18,6 +18,7 @@ export TFHUB_CACHE_DIR=$SCRATCH/.cache/tfhub_modules # For tensorflow_hub, curre
 
 export NAME=tf-cormorants
 export ENVDIR=$PROJECT/tf-cormorants
+# export ENVDIR=$SLURM_TMPDIR/tf-cormorants
 export DEPS=$PROJECT/dependencies  # pre-downloaded pip dependencies
 
 export LOGSDIR="$WORKSPACE/logs_$NAME"
