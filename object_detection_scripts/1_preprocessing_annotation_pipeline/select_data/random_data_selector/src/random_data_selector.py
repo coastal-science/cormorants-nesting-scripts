@@ -21,7 +21,7 @@ def get_sample(in_dir, sample_n, extension='jpg'):
     # Find number of tiles per folder
     n = math.ceil(sample_n / df['parent_directory'].nunique())
 
-    # Sample images from each parent directory
+    # Sample images from each parent tif_directory
     grouped_sample = df.groupby('parent_directory').sample(n)
 
     # Total sample
@@ -47,9 +47,9 @@ def select_random_tiles(in_dir, out_dir, n):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Takes a file path as input and tiles each .tif'
-                                                 'file in that directory.')
-    parser.add_argument('--in_dir', help='File path to the directory containing tifs to be tiled.')
-    parser.add_argument('--out_dir', help='File path to output directory.')
+                                                 'file in that tif_directory.')
+    parser.add_argument('--in_dir', help='File path to the tif_directory containing tifs to be tiled.')
+    parser.add_argument('--out_dir', help='File path to output tif_directory.')
     parser.add_argument('--n', type=int, help='Number of tiles to sample')
     args = parser.parse_args()
 
