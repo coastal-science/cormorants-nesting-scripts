@@ -9,11 +9,13 @@ complete pre-processing and annotation.
   converted into TIFs before you can proceed with tiling and annotation.
 * [Tile TIFs](tile_tifs) &mdash; large orthomosaic TIF images are divided into
   the tiles that will be annotated and used for training.
-* [Select Data]()
-* [Combine Annotation Labels]()
-* [LOST Annotation]()
 * [Collect Annotation Pools]()
-
+* [Select Data]()
+* [LOST Annotation]()
+* [Combine Annotation Labels](combine_annotation_labels) &mdash; annotations
+  use a hierarchical labelling scheme. Annotations are combined based on the
+  level of granularity chosen for model training (i.e. should the model
+  differentiate between species, age, etc?).
 
 ### Next &rarr;
 Once a set of data has been annotated, it can be used within the 
