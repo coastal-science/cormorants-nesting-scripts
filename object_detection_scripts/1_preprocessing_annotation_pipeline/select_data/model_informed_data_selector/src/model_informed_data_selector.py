@@ -299,7 +299,7 @@ def select_tiles(exported_model_dir, unannotated_pool_dir, out_dir, tf_label_map
 
 
 def save_images(tiles, out_dir):
-    # Create the output directory
+    # Create the output tif_directory
     img_out_dir = out_dir.joinpath('img/')
     if not img_out_dir.exists():
         img_out_dir.mkdir(parents=True)
@@ -334,7 +334,7 @@ def split_out_detections(detections):
 
 
 def save_detections(detections, out_dir, tf2lost_label_map):
-    # Create the output directory
+    # Create the output tif_directory
     if not out_dir.exists():
         out_dir.mkdir(parents=True)
 
@@ -359,11 +359,11 @@ if __name__ == '__main__':
     filters = {'max': (max, operator.le)}
 
     parser = argparse.ArgumentParser(description='Takes a file path as input and tiles each .tif'
-                                                 'file in that directory.')
-    parser.add_argument('--unannotated_pool', help='File path to the directory containing '
-                                                   'unannotated tiles. i.e. the directory '
+                                                 'file in that tif_directory.')
+    parser.add_argument('--unannotated_pool', help='File path to the tif_directory containing '
+                                                   'unannotated tiles. i.e. the tif_directory '
                                                    'containing the  containing tifs to be tiled.')
-    parser.add_argument('--exported_model', help='File path to the directory containing the saved '
+    parser.add_argument('--exported_model', help='File path to the tif_directory containing the saved '
                                                  'model')
     parser.add_argument('--tf_label_map', help='File path to the file')
     parser.add_argument('--lost_label_tree', help='.')
