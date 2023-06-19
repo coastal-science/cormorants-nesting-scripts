@@ -122,3 +122,5 @@ sub-section goes through how to do this.
 1. 
 1. 
 ### On Cedar Cluster
+
+Refer to [RCG documentation](https://github.sfu.ca/its/RCG/blob/machine-learning-docs/docs/machine_learning/object_detection.md)
