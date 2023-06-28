@@ -111,6 +111,8 @@ def find_duplicate_detections(to_process_df):
 
 
 def remove_duplicate_nests(df, merge_duplicates=False):
+    df = df.sort_values(by='detection_scores', ascending=False).reset_index(drop=True)
+
     nest_class = 1
     # Only remove duplicates from the specified classes
     to_process_df = df[df['detection_classes'].isin([nest_class])]
