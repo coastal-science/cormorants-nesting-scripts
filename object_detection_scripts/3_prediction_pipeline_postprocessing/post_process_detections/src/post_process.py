@@ -219,12 +219,12 @@ def birds_in_nests(df):
     return df.drop(out_of_nest_idx)
 
 
-def main(detection_csv, mask=False, deduplicate_nests=False, merge_duplicate_nests=False,
+def main(detection_csv, mask=False, deduplicate_nests=False, merge_duplicate_nests=False,  
          mask_file='', original_pano='', tile_size=1000, out_file=''):
     df = pd.read_csv(detection_csv)
     df = remove_nan_detections(df)
 
-    if mask:
+    if mask and Path(mask_file).is_file():
         print("Applying Mask...")
         df = apply_mask(mask_file, original_pano, tile_size, df)
 
@@ -239,6 +239,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--mask', help='.', action='store_true')
     parser.add_argument('--deduplicate_nests', help='.', action='store_true')
+    parser.add_argument('--merge_duplicate_nests', help='.', action='store_true')
     parser.add_argument('--detections_file', help='.', type=str, required=True)
     parser.add_argument('--original_pano', help='.', type=str, required=True)
     parser.add_argument('--tile_size', help='.', type=int, required=True)
@@ -246,5 +247,11 @@ if __name__ == '__main__':
     parser.add_argument('--mask_file', help='Use this', type=str)
     args = parser.parse_args()
 
-    main(args.detections_file, args.mask, args.deduplicate_nests,
-         args.mask_file, args.original_pano, args.tile_size, args.out_file)
+    main(detection_csv=args.detections_file, 
+         mask=args.mask, 
+         deduplicate_nests=args.deduplicate_nests,
+         merge_duplicate_nests=args.merge_duplicate_nests,
+         mask_file=args.mask_file, 
+         original_pano=args.original_pano, 
+         tile_size=args.tile_size, 
+         out_file=args.out_file)
