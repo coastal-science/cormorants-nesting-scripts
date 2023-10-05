@@ -1,4 +1,12 @@
 #!/bin/bash
+
+
+fail(){
+    printf '%s\n' "$1" >&2 ## Send message to stderr.
+    exit "${2-1}" ## Return a code specified by $2, or 1 by default.
+}
+
+
 # Helper functions for logging
 
 section_break(){
@@ -54,7 +62,6 @@ progress(){
 
   cat $full_path >> $OUTPUT_FILE
   cp $OUTPUT_FILE $LOGSDIR/ 
-
   echo Additional logs may be written to "$LOGSDIR" & echo
 }
 
