@@ -22,10 +22,11 @@ mkdir -p $LOGSDIR
 # User defined variables
 TILE_SIZE=1000
 TRAINED_MODEL=$WORKSPACE/exported_models/snb5/centernet_hg104_512/v9/
-#JSON_FILE="$WORKSPACE/snb-2020.json"
+# JSON_FILE="$WORKSPACE/snb-2020.json"
+# JSON_FILE="$WORKSPACE/snb-2021-manual.json"
 # JSON_FILE="$WORKSPACE/snb-2021-no-counts.json"
-#JSON_FILE="$WORKSPACE/snb-2021-manual.json"
 JSON_FILE="$WORKSPACE/snb-2021-train.json"
+JSON_FILE="$WORKSPACE/astoria-2023.json"
 
 jq -c '.[]' $JSON_FILE | while read i; do
     TASK_PATH=$(echo $i | jq -r '.task_path')
@@ -36,85 +37,58 @@ jq -c '.[]' $JSON_FILE | while read i; do
     PIPELINE=$WORKSPACE/$REPO/object_detection_scripts
 
     # Write Script and Job details to file
-    progress $LOGSDIR $LOGSDIR
+    progress . $LOGSDIR
 
     # Move to the correct starting point
     echo "LOG STATUS: $TASK_PATH"
     echo "LOG STATUS: Running pipeline"
     cd $PIPELINE
 
-  #  # Tile Image 
-  #  echo "LOG STATUS: Tiling Image..."
-  #  cd $PIPELINE/tile_tifs
-  #  python src/tile_tif.py \
-  #      --in_file "$IMAGE" \
-  #      --out_dir output/$TASK_PATH/ \
-  #      --tile_height $TILE_SIZE \
-  #      --tile_width $TILE_SIZE
-  #  echo "LOG STATUS: Completed tile_tfs"
-
-  #  # Run Model
-  #  echo "LOG STATUS: Predicting..."
-  #  cd $PIPELINE/predict
-  #  python src/predict.py \
-  #      --tiles $PIPELINE/tile_tifs/output/$TASK_PATH \
-  #      --exported_model $TRAINED_MODEL \
-  #      --out_dir output/$TASK_PATH/ \
-  #      --box_thresh 0.1
-  #  echo "LOG STATUS: Completed predictions"
+   # Tile Image 
+   echo "LOG STATUS: Tiling Image..."
+   cd $PIPELINE/1_preprocessing_annotation_pipeline/tile_tifs
+   python src/tile_tifs.py \
+      --tif_file "$IMAGE" \
+      --out_dir output/$TASK_PATH/ \
+      --tile_height $TILE_SIZE \
+      --tile_width $TILE_SIZE \
+      || fail "Tiling failed" $?
+   echo "LOG STATUS: Completed tile_tfs"
+  
+   # Run Model
+   echo "LOG STATUS: Predicting..."
+   cd $PIPELINE/3_prediction_pipeline_postprocessing/predict
+   python src/predict.py \
+       --tiles $PIPELINE/1_preprocessing_annotation_pipeline/tile_tifs/output/$TASK_PATH/ \
+       --exported_model $TRAINED_MODEL \
+       --out_dir output/$TASK_PATH/ \
+       --box_thresh 0.1 || fail "Predicting failed" $?
+   echo "LOG STATUS: Completed predictions"
 
     # Post Process Model Results
     echo "LOG STATUS: Post Processing..."
-    cd $PIPELINE/post_process_detections
-    mkdir -p $PIPELINE/post_process_detections/output/$TASK_PATH/
-    python3 src/post_process.py --mask --deduplicate_nests \
-      --detections_file $PIPELINE/predict/output/$TASK_PATH/detections.csv \
+    cd $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections
+    mkdir -p $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/output/$TASK_PATH/
+    python3 src/post_process.py \
+      --mask \
+      --detections_file $PIPELINE/3_prediction_pipeline_postprocessing/predict/output/$TASK_PATH/detections.csv \
       --original_pano "$IMAGE" \
-      --mask_file $PIPELINE/post_process_detections/input/$TASK_PATH/mask.csv \
+      --mask_file $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/input/$TASK_PATH/mask.csv \
       --tile_size 1000 \
-      --out_file $PIPELINE/post_process_detections/output/$TASK_PATH/post_processed_detections.csv 
+      --out_file $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/output/$TASK_PATH/post_processed_detections_masked.csv \
+      || fail "Post Processing failed" $?
+#      --deduplicate_nests \
+#      --merge_duplicate_nests \
+
     echo "LOG STATUS: Completed post-processing"
 
     # Remove Temporary Files
-    rm $PIPELINE/tile_tifs/output/$TASK_PATH/*jpg
+    # rm $PIPELINE/1_preprocessing_annotation_pipeline/tile_tifs/output/$TASK_PATH/*jpg
 
-    # Write Script to Output
-    echo "LOG STATUS: Saving output and logs"
-    mkdir -p output/$TASK_PATH
-    cat $WORKSPACE/run_model_on_new_pano.sh > output/$TASK_PATH/script.bak.log
+    echo "===> LOG STATUS: Completed $TASK_PATH"
 
-    # Write module list, environment varibles and script to output
-    full_path=$(realpath $0) # $0 is the name of the current script as it was executed
-
-    OUTPUT_FILE=output/$TASK_PATH/script.log
-    touch $OUTPUT_FILE
-
-    echo > $OUTPUT_FILE
-
-    module list >> $OUTPUT_FILE
-
-    section_break(){
-      (echo && echo && \
-      echo "==============================================" && \
-      echo && echo ) >> $1
-    }
-    section_break $OUTPUT_FILE
-
-    # get environment variables that partially contain any of the following keywords
-    printenv | grep -E 'NAME|ENVDIR|DEPS|LOGSDIR|SCRATCH|PROJECT|WORKSPACE|TF_MODEL_GARDEN|TF_OBJ_DET|TFHUB_CACHE_DIR' \
-      >> $OUTPUT_FILE
-
-    echo >> $OUTPUT_FILE
-
-    printenv | grep -E 'TASK|IMAGE|TILE|REPO|PIPELINE' \
-      >> $OUTPUT_FILE
-
-    section_break $OUTPUT_FILE
-    echo >> $OUTPUT_FILE
-
-    cat $full_path >> $OUTPUT_FILE
-    cp $OUTPUT_FILE $LOGSDIR/ 
 
 done
 
+echo "LOG STATUS: Completed all tasks."
 echo "LOG STATUS: Additional logs may be written to $LOGSDIR"
