@@ -183,20 +183,20 @@ def COCO_dict():
 
 
 # Label Map
-label_map_path = '/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts-bkp/object_detection_scripts/2_training_pipeline/lost_to_tf/input/snb5/label_map.pbtxt'
-label_map = read_label_map(label_map_path)
-label_map['Cormorant DCCO'] = 0
-label_map['Cormorant PECO'] = 0
-label_map['Cormorant DCCO Juvenile'] = 0
-label_map['Cormorant DCCO Adult'] = 0
-label_map['Cormorant PECO Adult'] = 0
+def create_label_map(label_map_path):
+    label_map = read_label_map(label_map_path)
+    label_map['Cormorant DCCO'] = 0
+    label_map['Cormorant PECO'] = 0
+    label_map['Cormorant DCCO Juvenile'] = 0
+    label_map['Cormorant DCCO Adult'] = 0
+    label_map['Cormorant PECO Adult'] = 0
 
-label_map['Nest PECO Occupied'] = 1
-label_map['Nest DCCO Occupied'] = 1
-label_map['Nest DCCO'] = 1
+    label_map['Nest PECO Occupied'] = 1
+    label_map['Nest DCCO Occupied'] = 1
+    label_map['Nest DCCO'] = 1
+    return label_map
 
-
-def create_annotation_coco_json(tile_dir, annotation_dir, out_file):
+def create_annotation_coco_json(tile_dir, annotation_dir, out_file, label_map):
     all_annotations = [pd.read_csv(f) for f in Path(annotation_dir).glob("*_annos.csv")]
     coco_data = COCO_dict()
 
@@ -298,18 +298,32 @@ if __name__ == '__main__':
     # args = parser.parse_args()
 
     # INPUT VARIABLES
-    tile_directory = Path('/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts-bkp/object_detection_scripts/1_preprocessing_annotation_pipeline/tile_tifs/output/2020_SNB/MANUAL_COUNTS/')
-    annotation_dir = '/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts/object_detection_scripts/4_comparing_manual_counts/manual_counts/output/2020/VALIDATION'
-    detections_dir = '/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts/object_detection_scripts/3_prediction_pipeline_postprocessing/post_process_detections/output/2020/VALIDATION/snb5_cn_hg_v9'
+    WORKSPACE   = Path("/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts")
+    WORKSPACE_2 = Path('/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts-bkp')
+
+    tile_directory = WORKSPACE_2 / 'object_detection_scripts/1_preprocessing_annotation_pipeline/tile_tifs/output/2020_SNB/MANUAL_COUNTS/'
+    annotation_dir = WORKSPACE / 'object_detection_scripts/4_comparing_manual_counts/manual_counts/output/2020/VALIDATION'
+    detections_dir = WORKSPACE / 'object_detection_scripts/3_prediction_pipeline_postprocessing/post_process_detections/output/2020/VALIDATION/snb5_cn_hg_v9'
+
+    label_map_path = WORKSPACE_2 / 'object_detection_scripts/2_training_pipeline/lost_to_tf/input/snb5/label_map.pbtxt'
 
     # OUTPUT VARIABLES
-    annotation_out_file = "~/Downloads/annotations.json"
-    detection_result_file = "~/Downloads/results.json"
+    out_dir = Path("~/Downloads")
+    # out_dir = Path(args.out_dir)
+    if not out_dir.exists():
+        out_dir.mkdir(parents=True)
+
+    annotation_out_file = out_dir / 'annotations.json'
+    detection_result_file = out_dir / 'results.json'
+
+    # Create label map
+    label_map = create_label_map(label_map_path)
 
     # Annotations
     create_annotation_coco_json(tile_directory,
                                 annotation_dir,
-                                annotation_out_file)
+                                annotation_out_file,
+                                label_map)
 
     # Detections
     create_detection_coco_json(tile_directory,
@@ -320,7 +334,7 @@ if __name__ == '__main__':
                                         detection_result_file,
                                         max_detections=[20, 200, 400],
                                         iou_thresholds=[0.5],
-                                        out_file="/Users/jilliana/Downloads/coco_eval_iou0.5.csv")
+                                        out_file= out_dir / "coco_eval_iou0.5.csv")
 
     calculate_precisions(coco_eval, iou_threshold=0.1)
     calculate_recalls(coco_eval, 400)
