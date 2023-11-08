@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 import pandas as pd
 import ast
@@ -294,10 +295,23 @@ def calculate_recalls(coco_eval, max_detections, iou_threshold=None):
 
 
 if __name__ == '__main__':
-    # parser = argparse.ArgumentParser(description='')
-    # args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='TODO')
+    parser.add_argument('--tiles', help='File path to the directory containing '
+                                                   'unannotated tiles. i.e. the directory '
+                                                   'containing the containing tifs to be tiled.')
+    parser.add_argument('--anno_folder', help='Folder containing manual annotations *_annos.csv.', type=str)
+    parser.add_argument('--detections_dir', help='Folder containing merged*.csv detection csv', type=str)
+    parser.add_argument('--label_map', help='Path containing label map', type=str)
+
+    parser.add_argument('--out_dir', help='.', type=str)
+
+    args = parser.parse_args()
 
     # INPUT VARIABLES
+    # tile_directory = Path(args.tiles)
+    # annotation_dir = Path(args.anno_folder)
+    # detections_dir = Path(args.detections_dir)
+    # label_map_path = Path(args.label_map)
     WORKSPACE   = Path("/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts")
     WORKSPACE_2 = Path('/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts-bkp')
 
@@ -308,14 +322,14 @@ if __name__ == '__main__':
     label_map_path = WORKSPACE_2 / 'object_detection_scripts/2_training_pipeline/lost_to_tf/input/snb5/label_map.pbtxt'
 
     # OUTPUT VARIABLES
-    out_dir = Path("~/Downloads")
     # out_dir = Path(args.out_dir)
+    out_dir = WORKSPACE / 'object_detection_scripts/4_comparing_manual_counts/calc_mAP/output'
     if not out_dir.exists():
         out_dir.mkdir(parents=True)
 
     annotation_out_file = out_dir / 'annotations.json'
     detection_result_file = out_dir / 'results.json'
-
+        
     # Create label map
     label_map = create_label_map(label_map_path)
 
