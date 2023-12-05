@@ -9,7 +9,6 @@ from shapely.geometry import box
 import ast
 import tqdm
 import numpy as np
-import pathlib
 
 Image.MAX_IMAGE_PIXELS = 3000000000
 

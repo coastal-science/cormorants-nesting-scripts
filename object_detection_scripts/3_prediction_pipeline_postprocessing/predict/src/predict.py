@@ -123,8 +123,9 @@ def inference_as_raw_output(path2images, detection_model, box_th=0.25, nms_th=0.
     Returns:
       detections (dict): filtered predictions that model made
     """
-    all_images = list(path2images.glob("*"))
+    all_images = list(path2images.glob("*/*"))
     print(f'Ready to start inference on {len(all_images)} images!')
+    # assert len(all_images) > 0, "Trying to predict on 0 images."
 
     all_detections = {}
     for image_path in tqdm(all_images):
