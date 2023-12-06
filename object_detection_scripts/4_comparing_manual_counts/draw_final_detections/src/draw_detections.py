@@ -211,7 +211,6 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_
     font = ImageFont.truetype('/Library/Fonts/Arial.ttf', 12)
 
     count = 0
-    import pdb
     for i, anno, i_file in zip(annotations['anno.idx'], annotations['anno.data'], annotations['img.img_path']):
         tile_name = Path(i_file).name
         tile = Image.open(tile_directory.joinpath(tile_name))
@@ -228,7 +227,7 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_
     return draw
 
 
-def main(rescale_factor=2):
+def main(rescale_factor=4):
     if detections_file is not None:
         detections = pd.read_csv(detections_file)
         detections = filter_detections(detections, threshold_dict)
@@ -266,7 +265,6 @@ def main(rescale_factor=2):
             draw.polygon(list(zip(*b.exterior.xy)), outline=color, width=15)
 
     print("Reducing Image")
-    rescale_factor = 4
     im = im.reduce(factor=rescale_factor)
     print(im.size)
 
@@ -281,12 +279,36 @@ def main(rescale_factor=2):
 
 if __name__ == '__main__':
     # parser = argparse.ArgumentParser(description='')
-    # parser.add_argument('--img_file', help='.', type=str)
-    # parser.add_argument('--detections_file', help='.', type=str)
-    # parser.add_argument('--mask_file', help='.', type=str)
-    # parser.add_argument('--out_file', help='.', type=str)
+    # parser.add_argument('--img_file', type=str, help='File path to the input file on which to draw detections.')
+
+    # parser.add_argument('--detections_file', type=str, help='File path to the detections predicted by model inference.')
+    # parser.add_argument('--mask_file', type=str, required=False, help='File path to the CSV file containing the mask which'
+    #                                    'corresponds to the TIF(s) being tiled. There should be'
+    #                                    'a 1:1 correspondence between the TIF and mask names.')
+    
+    # parser.add_argument('--tile_size', type=int, default=1000, required=False, help='.')
+    # parser.add_argument('--rescale_factor', type=int, default=4, required=False, help='Compression factor for output image and size.')
+    # parser.add_argument('--threshold_dict', type=json.loads, default='{"0.0": 0.2, "1.0": 0.2}', help='cutoff scores for each class {0.0: 0.2, 1.0: 0.2} # 0: Cormorants, 1: Nest')
+    
+    # parser.add_argument('--ground_truth_file', type=str, required=False, help='File path to ground truth annotations.')
+    # parser.add_argument('--tile_directory', required=False, help='Path to the tif_directory containing annotated TIFs.')
+
+    # parser.add_argument('--out_file', type=str, help='File path to img_file with model predicted boxes drawn.')
     # args = parser.parse_args()
 
+    # img_file = args.img_file
+    # detections_file = args.detections_file
+    # mask_file = args.mask_file
+
+    # TODO: check for duplication/overlap in `draw_ground_truth_annotations`
+    # tile_size = args.tile_size
+    # rescale_factor = args.rescale_factor
+    # threshold_dict = args.threshold_dict
+
+    # ground_truth_file = args.ground_truth_file
+    # tile_directory = args.tile_directory
+    # 
+    # out_file = args.out_file
     # ==============================================================================================
     # FOR MANUSCRIPT - 2021 -6 14
     img_file = '/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts/object_detection_scripts/tile_tifs/input/2021_SNB/TEST/2021-06-14_SNB_Panorama_15.tif'
