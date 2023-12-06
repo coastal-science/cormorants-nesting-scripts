@@ -6,6 +6,8 @@ import pandas as pd
 from PIL import ImageDraw, ImageFont, Image, ExifTags
 from pathlib import Path
 from shapely.geometry import box
+import argparse
+import json
 import ast
 import tqdm
 import numpy as np
