@@ -253,7 +253,8 @@ def main(rescale_factor=4):
     draw = draw_tiles(draw, tile_size, tile_size)
 
     print("Draw Mask")
-    draw = draw_mask(draw, mask_file)
+    if mask_file and mask_file.is_file() and mask_file.exists(): 
+        draw = draw_mask(draw, mask_file)
 
     print("Drawing Boxes")
     if detections_file is not None:
@@ -269,8 +270,9 @@ def main(rescale_factor=4):
     print(im.size)
 
     print("Draw Ground truth Annotations")
-    # draw = draw_ground_truth_annotations(ImageDraw.Draw(im), ground_truth_file, tile_directory,
-    #                                      rescale_factor=rescale_factor)
+    if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
+        draw = draw_ground_truth_annotations(ImageDraw.Draw(im), ground_truth_file, tile_directory,
+                                             rescale_factor=rescale_factor)
 
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
