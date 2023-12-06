@@ -8,6 +8,7 @@
 *.tfrecord
 **/input/*
 **/output/*
+**.log
 
 # Python Artifacts
 .DS_Store
