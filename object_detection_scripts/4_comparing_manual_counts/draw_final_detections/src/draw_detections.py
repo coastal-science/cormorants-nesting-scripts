@@ -232,6 +232,7 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_
 def main(rescale_factor=4):
     if detections_file is not None:
         detections = pd.read_csv(detections_file)
+        assert detections['detection_classes'].hasnans == False, f'detections_file={detections_file} must not contain null classes' + '\n' + 'use output of post_process_detections'
         detections = filter_detections(detections, threshold_dict)
 
     print("Reading in Image")
@@ -269,7 +270,7 @@ def main(rescale_factor=4):
 
     print("Reducing Image")
     im = im.reduce(factor=rescale_factor)
-    print(im.size)
+    print(f"New image size is: {im.size}")
 
     print("Draw Ground truth Annotations")
     if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
