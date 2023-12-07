@@ -76,8 +76,8 @@ jq -c '.[]' $JSON_FILE | while read i; do
       --mask_file $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/input/$TASK_PATH/mask.csv \
       --tile_size 1000 \
       --out_file $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/output/$TASK_PATH/post_processed_detections_masked.csv \
-     --deduplicate_nests \
-     --merge_duplicate_nests \
+      --deduplicate_nests \
+      --merge_duplicate_nests \
       || fail "Post Processing failed" $?
 
     echo "LOG STATUS: Completed post-processing"
