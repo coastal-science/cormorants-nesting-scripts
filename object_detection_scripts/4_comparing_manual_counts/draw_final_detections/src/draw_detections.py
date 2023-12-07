@@ -31,13 +31,25 @@ def find_full_canvas_dims(df):
 
 
 def create_detection_geom(tile_name, detection_box, tile_width=1000, tile_height=1000):
+    """ Create a Shapely bounding box for the `detecton_box`
+    
+    To draw a `detecton_box` box it must be like TensorFlow format and use entire pano coordinate.
+    Inputs:
+        tile_name (str or Path-Like): TODO: `tile_name` has a unique format and may be rendered deprecated when using canonical coordinates
+        detection_box (list): array of floating point values between 0 and 1, for coordinates [top, left, bottom, right] (TF format)
+        tile_width (number): scaling factor to map 0-1 values into the actual tile width
+        tile_height (number): scaling factor to map 0-1 values into the actual tile height
+
+    Returns:
+        box(shapely.geometry.box):
+    """
     y_tile, x_tile = Path(tile_name).name.split('.')[:2]
     y_tile = int(y_tile)
     x_tile = int(x_tile)
 
-    y1, x1, y2, x2 = detection_box  # format: [y1, x1, y2, x2]
-    b = box(minx=(x_tile + x1) * tile_width, miny=(y_tile + y1) * tile_height,
-            maxx=(x_tile + x2) * tile_width, maxy=(y_tile + y2) * tile_height)
+    x1, y1, x2, y2 = detection_box  # format: [x1, y1, x2, y2]
+    b = box(minx=(x1) * tile_width, miny=(y1) * tile_height,
+            maxx=(x2) * tile_width, maxy=(y2) * tile_height)
     return b
 
 
