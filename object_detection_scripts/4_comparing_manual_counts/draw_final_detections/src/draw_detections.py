@@ -282,45 +282,59 @@ def main(rescale_factor=4):
 
 
 if __name__ == '__main__':
-    # parser = argparse.ArgumentParser(description='')
-    # parser.add_argument('--img_file', type=str, help='File path to the input file on which to draw detections.')
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('--img_file', type=str, help='File path to the input file panorama on which to draw detections.')
 
-    # parser.add_argument('--detections_file', type=str, help='File path to the detections predicted by model inference.')
-    # parser.add_argument('--mask_file', type=str, required=False, help='File path to the CSV file containing the mask which'
-    #                                    'corresponds to the TIF(s) being tiled. There should be'
-    #                                    'a 1:1 correspondence between the TIF and mask names.')
+    parser.add_argument('--detections_file', type=str, help='File path to the detections predicted by model inference.')
+    parser.add_argument('--mask_file', type=str, required=False, help='File path to the CSV file containing the mask which'
+                                       'corresponds to the TIF(s) being tiled. There should be'
+                                       'a 1:1 correspondence between the TIF and mask names.')
     
-    # parser.add_argument('--tile_size', type=int, default=1000, required=False, help='.')
-    # parser.add_argument('--rescale_factor', type=int, default=4, required=False, help='Compression factor for output image and size.')
-    # parser.add_argument('--threshold_dict', type=json.loads, default='{"0.0": 0.2, "1.0": 0.2}', help='cutoff scores for each class {0.0: 0.2, 1.0: 0.2} # 0: Cormorants, 1: Nest')
+    parser.add_argument('--tile_size', type=int, default=1000, required=False, help='Pixels for a square tiles')
+    parser.add_argument('--rescale_factor', type=int, default=4, required=False, help='Compression factor for output image and size.')
+    parser.add_argument('--threshold_dict', type=json.loads, default='{"0.0": 0.2, "1.0": 0.2}', help='cutoff scores for each class {0.0: 0.2, 1.0: 0.2} # 0: Cormorants, 1: Nest')
     
-    # parser.add_argument('--ground_truth_file', type=str, required=False, help='File path to ground truth annotations.')
-    # parser.add_argument('--tile_directory', required=False, help='Path to the tif_directory containing annotated TIFs.')
+    parser.add_argument('--ground_truth_file', type=str, required=False, help='File path to ground truth annotations.')
+    parser.add_argument('--tile_directory', type=str, required=False, help='Path to the tif_directory containing annotated TIFs.')
 
-    # parser.add_argument('--out_file', type=str, help='File path to img_file with model predicted boxes drawn.')
-    # args = parser.parse_args()
+    parser.add_argument('--out_file', type=str, help='File path to img_file with boxes drawn from model predictions.')
+    args = parser.parse_args()
 
-    # img_file = args.img_file
-    # detections_file = args.detections_file
-    # mask_file = args.mask_file
+    img_file = Path(args.img_file)
+    detections_file = Path(args.detections_file)
+    mask_file = Path(args.mask_file)
 
     # TODO: check for duplication/overlap in `draw_ground_truth_annotations`
-    # tile_size = args.tile_size
-    # rescale_factor = args.rescale_factor
-    # threshold_dict = args.threshold_dict
+    tile_size = args.tile_size
+    rescale_factor = args.rescale_factor
+    threshold_dict = args.threshold_dict
+    threshold_dict = { float(k): float(v) for k,v in threshold_dict.items()}
 
-    # ground_truth_file = args.ground_truth_file
-    # tile_directory = args.tile_directory
-    # 
-    # out_file = args.out_file
+    ground_truth_file = args.ground_truth_file
+    tile_directory = args.tile_directory
+    try:
+        ground_truth_file = Path(args.ground_truth_file)
+        tile_directory = Path(args.tile_directory)
+    except TypeError as err: #expected str, bytes or os.PathLike object, not NoneType
+        print(f"ground_truth_file={ground_truth_file}, tile_directory={tile_directory}: {str(err)}")
+        print("skipping drawing ground truth annotations")
+    
+    out_file = Path(args.out_file) / img_file.name
+    
+    print("DEBUG:")
+    print(f"  img_file={img_file}", f"detections_file={detections_file}", f"mask_file={mask_file}", sep="\n  ", end='\n\n')
+    print(f"  threshold_dict={threshold_dict}", f"tile_size={tile_size}", f"rescale_factor={rescale_factor}", sep="\n  ", end='\n\n')
+    print(f"  ground_truth_file={ground_truth_file}", f"tile_directory={tile_directory}", sep="\n  ", end='\n\n')
+    print(f"  out_file={out_file}", sep="\n  ", end='\n\n')
+
     # ==============================================================================================
     # FOR MANUSCRIPT - 2021 -6 14
-    img_file = '/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts/object_detection_scripts/tile_tifs/input/2021_SNB/TEST/2021-06-14_SNB_Panorama_15.tif'
-    detections_file = '/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts/object_detection_scripts/compare_counts/input/SNB_2021/TEST-ALL/snb5_cn_hg_v9_detections/pp2_20210614_detections.csv'
-    threshold_dict = {0.0: 0.2, 1.0: 0.2}
-    mask_file = '/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts/object_detection_scripts/post_process_detections/input/2021_SNB/TEST/SNB_15_20210614/span2_bridge_mask.csv'
-    tile_size = 1000
-    out_file = 'cormorants-nesting-scripts/object_detection_scripts/draw_final_detections/output/2021_SNB/TEST/20210614.png'
+    # img_file = '/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts/object_detection_scripts/tile_tifs/input/2021_SNB/TEST/2021-06-14_SNB_Panorama_15.tif'
+    # detections_file = '/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts/object_detection_scripts/compare_counts/input/SNB_2021/TEST-ALL/snb5_cn_hg_v9_detections/pp2_20210614_detections.csv'
+    # threshold_dict = {0.0: 0.2, 1.0: 0.2}
+    # mask_file = '/Users/jilliana/Documents/rcg_projects/RuthJoy/Cormorants/cormorants-nesting-scripts/object_detection_scripts/post_process_detections/input/2021_SNB/TEST/SNB_15_20210614/span2_bridge_mask.csv'
+    # tile_size = 1000
+    # out_file = 'cormorants-nesting-scripts/object_detection_scripts/draw_final_detections/output/2021_SNB/TEST/20210614.png'
     main()
     # ==============================================================================================
 
