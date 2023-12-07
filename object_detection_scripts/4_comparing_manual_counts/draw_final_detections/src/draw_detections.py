@@ -3,7 +3,7 @@ e.g.
 """
 import matplotlib.pyplot as plt
 import pandas as pd
-from PIL import ImageDraw, ImageFont, Image, ExifTags
+from PIL import ImageDraw, ImageFont, Image, ExifTags, __version__ as PILLOW_VERSION
 from pathlib import Path
 from shapely.geometry import box
 import argparse
@@ -266,7 +266,10 @@ def main(rescale_factor=4):
                 color = '#90EE90'
             elif lbl == 1:
                 color = '#fc8d59'
-            draw.polygon(list(zip(*b.exterior.xy)), outline=color, width=15)
+            if PILLOW_VERSION >= '9.0':
+                draw.polygon(list(zip(*b.exterior.xy)), outline=color, width=15)
+            else:
+                draw.line(list(zip(*b.exterior.xy)), fill=color, width=15)
 
     print("Reducing Image")
     im = im.reduce(factor=rescale_factor)
