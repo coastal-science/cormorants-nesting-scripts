@@ -18,9 +18,6 @@ mkdir -p $LOGSDIR
 # User defined variables
 TILE_SIZE=1000
 
-# JSON_FILE="$WORKSPACE/snb-2020.json"
-# JSON_FILE="$WORKSPACE/snb-2021-manual.json"
-# JSON_FILE="$WORKSPACE/snb-2021-no-counts.json"
 JSON_FILE="$WORKSPACE/snb-2021-train.json"
 JSON_FILE="$WORKSPACE/astoria-2023.json"
 
