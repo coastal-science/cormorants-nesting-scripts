@@ -311,7 +311,7 @@ if __name__ == '__main__':
     parser.add_argument('--threshold_dict', type=json.loads, default='{"0.0": 0.2, "1.0": 0.2}', help='cutoff scores for each class {0.0: 0.2, 1.0: 0.2} # 0: Cormorants, 1: Nest')
     
     parser.add_argument('--ground_truth_file', type=str, required=False, help='File path to ground truth annotations.')
-    parser.add_argument('--tile_directory', type=str, required=False, help='Path to the tif_directory containing annotated TIFs.')
+    parser.add_argument('--tile_directory', type=str, required=False, help='Path to the tile_directory containing the tiles corresponding to the ground truth annotations.')
 
     parser.add_argument('--out_file', type=str, help='File path to img_file with boxes drawn from model predictions.')
     args = parser.parse_args()
