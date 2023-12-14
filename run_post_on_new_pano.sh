@@ -1,6 +1,7 @@
 #!/bin/bash
 #SBATCH --cpus-per-task=1  		# Look at Cluster docs for CPU/GPU ratio 
 #SBATCH --mem=16000M       		# Memory proportional to GPUs: 32000 Cedar
+#SBATCH --time=0-1:00:00     	# DD-HH:MM:SS
 
 # Load functions
 . utils.sh # progress()
