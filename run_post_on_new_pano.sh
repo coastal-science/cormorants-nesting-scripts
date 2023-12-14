@@ -57,10 +57,7 @@ jq -c '.[]' $JSON_FILE | while read i; do
     echo "LOG STATUS: Completed draw_detections"
     
    
-    echo "LOG STATUS: Completed post-processing"
 
-    # Remove Temporary Files
-    # rm $PIPELINE/1_preprocessing_annotation_pipeline/tile_tifs/output/$TASK_PATH/*jpg
 
     echo "===> LOG STATUS: Completed $TASK_PATH"
 
