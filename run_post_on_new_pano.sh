@@ -17,7 +17,7 @@ mkdir -p $LOGSDIR
 
 # User defined variables
 TILE_SIZE=1000
-TRAINED_MODEL=$WORKSPACE/exported_models/snb5/centernet_hg104_512/v9/
+
 # JSON_FILE="$WORKSPACE/snb-2020.json"
 # JSON_FILE="$WORKSPACE/snb-2021-manual.json"
 # JSON_FILE="$WORKSPACE/snb-2021-no-counts.json"
