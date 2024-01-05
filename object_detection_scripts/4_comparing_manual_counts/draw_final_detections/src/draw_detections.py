@@ -290,7 +290,7 @@ def main(rescale_factor=4):
     print("Draw Ground truth Annotations")
     if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
         draw = draw_ground_truth_annotations(ImageDraw.Draw(im), ground_truth_file, tile_directory,
-                                             rescale_factor=rescale_factor)
+                                             tile_size = anno_tile_size, rescale_factor=rescale_factor)
 
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
@@ -306,10 +306,11 @@ if __name__ == '__main__':
                                        'corresponds to the TIF(s) being tiled. There should be'
                                        'a 1:1 correspondence between the TIF and mask names.')
     
-    parser.add_argument('--tile_size', type=int, default=1000, required=False, help='Pixels for a square tiles')
+    parser.add_argument('--tile_size', type=int, default=1000, required=False, help='Pixels for a square (detection) tiles')
     parser.add_argument('--rescale_factor', type=int, default=4, required=False, help='Compression factor for output image and size.')
     parser.add_argument('--threshold_dict', type=json.loads, default='{"0.0": 0.2, "1.0": 0.2}', help='cutoff scores for each class {0.0: 0.2, 1.0: 0.2} # 0: Cormorants, 1: Nest')
     
+    parser.add_argument('--anno_tile_size', type=int, default=1000, required=False, help='Pixels for a square (annotation) tiles')
     parser.add_argument('--ground_truth_file', type=str, required=False, help='File path to ground truth annotations.')
     parser.add_argument('--tile_directory', type=str, required=False, help='Path to the tile_directory containing the tiles corresponding to the ground truth annotations.')
 
@@ -322,6 +323,7 @@ if __name__ == '__main__':
 
     # TODO: check for duplication/overlap in `draw_ground_truth_annotations`
     tile_size = args.tile_size
+    anno_tile_size = args.anno_tile_size
     rescale_factor = args.rescale_factor
     threshold_dict = args.threshold_dict
     threshold_dict = { float(k): float(v) for k,v in threshold_dict.items()}
