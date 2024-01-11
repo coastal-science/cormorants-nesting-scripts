@@ -30,12 +30,11 @@ def find_full_canvas_dims(df):
     return max(tile_xs) + 1, max(tile_ys) + 1
 
 
-def create_detection_geom(tile_name, detection_box, tile_width=1000, tile_height=1000):
+def create_detection_geom(detection_box, tile_width=1000, tile_height=1000):
     """ Create a Shapely bounding box for the `detecton_box`
     
     To draw a `detecton_box` box it must be like TensorFlow format and use entire pano coordinate.
     Inputs:
-        tile_name (str or Path-Like): TODO: `tile_name` has a unique format and may be rendered deprecated when using canonical coordinates
         detection_box (list): array of floating point values between 0 and 1, for coordinates [top, left, bottom, right] (TF format)
         tile_width (number): scaling factor to map 0-1 values into the actual tile width
         tile_height (number): scaling factor to map 0-1 values into the actual tile height
@@ -43,9 +42,6 @@ def create_detection_geom(tile_name, detection_box, tile_width=1000, tile_height
     Returns:
         box(shapely.geometry.box):
     """
-    y_tile, x_tile = Path(tile_name).name.split('.')[:2]
-    y_tile = int(y_tile)
-    x_tile = int(x_tile)
 
     x1, y1, x2, y2 = detection_box  # format: [x1, y1, x2, y2]
     b = box(minx=(x1) * tile_width, miny=(y1) * tile_height,
@@ -60,7 +56,7 @@ def plot_mask_result(mask, df):
     # Plot Boxes
     box_geoms = []
     for image, det_box in zip(df['image'], df['detection_boxes']):
-        box_geoms.append(create_detection_geom(image, ast.literal_eval(det_box)))
+        box_geoms.append(create_detection_geom(ast.literal_eval(det_box)))
 
     for b in box_geoms:
         if b.intersects(mask):
@@ -257,7 +253,7 @@ def main(rescale_factor=4):
         for image, det_box, label in zip(detections['image'], detections['detection_boxes'],
                                          detections['detection_classes']):
             box_geoms.append(
-                create_detection_geom(image, ast.literal_eval(det_box), tile_width=tile_size,
+                create_detection_geom(ast.literal_eval(det_box), tile_width=tile_size,
                                       tile_height=tile_size))
             box_labels.append(label)
 
