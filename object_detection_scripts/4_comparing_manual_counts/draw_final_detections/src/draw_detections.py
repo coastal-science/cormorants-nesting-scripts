@@ -286,7 +286,7 @@ def main(rescale_factor=4):
     print("Draw Ground truth Annotations")
     if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
         draw = draw_ground_truth_annotations(ImageDraw.Draw(im), ground_truth_file, tile_directory,
-                                             tile_size = anno_tile_size, rescale_factor=rescale_factor)
+                                             tile_size = anno_tile_size, rescale_factor=1)
 
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
