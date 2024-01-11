@@ -302,11 +302,11 @@ if __name__ == '__main__':
                                        'corresponds to the TIF(s) being tiled. There should be'
                                        'a 1:1 correspondence between the TIF and mask names.')
     
-    parser.add_argument('--tile_size', type=int, default=1000, required=False, help='Pixels for a square (detection) tiles')
+    parser.add_argument('--tile_size', type=int, default=1000, required=False, help='Pixels for square (detection) tiles')
     parser.add_argument('--rescale_factor', type=int, default=4, required=False, help='Compression factor for output image and size.')
     parser.add_argument('--threshold_dict', type=json.loads, default='{"0.0": 0.2, "1.0": 0.2}', help='cutoff scores for each class {0.0: 0.2, 1.0: 0.2} # 0: Cormorants, 1: Nest')
     
-    parser.add_argument('--anno_tile_size', type=int, default=1000, required=False, help='Pixels for a square (annotation) tiles')
+    parser.add_argument('--anno_tile_size', type=int, default=1000, required=False, help='Pixels for square (annotation) tiles.')
     parser.add_argument('--ground_truth_file', type=str, required=False, help='File path to ground truth annotations.')
     parser.add_argument('--tile_directory', type=str, required=False, help='Path to the tile_directory containing the tiles corresponding to the ground truth annotations.')
 
@@ -315,7 +315,7 @@ if __name__ == '__main__':
 
     img_file = Path(args.img_file)
     detections_file = Path(args.detections_file)
-    mask_file = Path(args.mask_file)
+    mask_file = Path(args.mask_file) if args.mask_file else args.mask_file
 
     # TODO: check for duplication/overlap in `draw_ground_truth_annotations`
     tile_size = args.tile_size
@@ -337,7 +337,7 @@ if __name__ == '__main__':
     
     print("DEBUG:")
     print(f"  img_file={img_file}", f"detections_file={detections_file}", f"mask_file={mask_file}", sep="\n  ", end='\n\n')
-    print(f"  threshold_dict={threshold_dict}", f"tile_size={tile_size}", f"rescale_factor={rescale_factor}", sep="\n  ", end='\n\n')
+    print(f"  threshold_dict={threshold_dict}", f"tile_size={tile_size}", f"anno_tile_size={anno_tile_size}", f"rescale_factor={rescale_factor}", sep="\n  ", end='\n\n')
     print(f"  ground_truth_file={ground_truth_file}", f"tile_directory={tile_directory}", sep="\n  ", end='\n\n')
     print(f"  out_file={out_file}", sep="\n  ", end='\n\n')
 
