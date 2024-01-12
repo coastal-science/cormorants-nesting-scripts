@@ -12,6 +12,8 @@ import ast
 import tqdm
 import numpy as np
 
+convert_version = lambda x : tuple(map(int, x.split(".")))
+PILLOW_VERSION = convert_version(PILLOW_VERSION)
 Image.MAX_IMAGE_PIXELS = 3000000000
 
 
@@ -218,8 +220,7 @@ def draw_tiles(draw, tile_height, tile_width):
 def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_size=3000,
                                   rescale_factor=1):
     annotations = pd.read_csv(ground_truth_file).dropna(subset=['anno.data'])
-    font = ImageFont.load_default(size=12)
-
+    font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
     count = 0
     for i, anno, i_file in zip(annotations['anno.idx'], annotations['anno.data'], annotations['img.img_path']):
         tile_name = Path(i_file).name
@@ -274,7 +275,7 @@ def main(rescale_factor=4):
                 color = '#90EE90'
             elif lbl == 1:
                 color = '#fc8d59'
-            if PILLOW_VERSION >= '9.0':
+            if PILLOW_VERSION >= convert_version('9.0'):
                 draw.polygon(list(zip(*b.exterior.xy)), outline=color, width=15)
             else:
                 draw.line(list(zip(*b.exterior.xy)), fill=color, width=15)
