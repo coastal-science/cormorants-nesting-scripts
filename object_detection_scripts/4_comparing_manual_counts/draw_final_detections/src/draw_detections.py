@@ -232,7 +232,7 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_
         y0 = (tile_y0 + (int(tile_y)*tile_size)) / rescale_factor
         x1 = (tile_x1 + (int(tile_x)*tile_size)) / rescale_factor
         y1 = (tile_y1 + (int(tile_y)*tile_size)) / rescale_factor
-        draw.rectangle([x0, y0, x1, y1], outline='gold', width=3)
+        draw.rectangle([x0, y0, x1, y1], outline='gold', width=15)
         draw.text((np.mean([x0, x1]), np.mean([y0, y1])), str(int(i)), fill='DeepPink', font=font, anchor='mm')
 
     return draw
