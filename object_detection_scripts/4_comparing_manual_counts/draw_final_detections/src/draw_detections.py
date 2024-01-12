@@ -218,7 +218,7 @@ def draw_tiles(draw, tile_height, tile_width):
 def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_size=3000,
                                   rescale_factor=1):
     annotations = pd.read_csv(ground_truth_file).dropna(subset=['anno.data'])
-    font = ImageFont.truetype('/Library/Fonts/Arial.ttf', 12)
+    font = ImageFont.load_default(size=12)
 
     count = 0
     for i, anno, i_file in zip(annotations['anno.idx'], annotations['anno.data'], annotations['img.img_path']):
