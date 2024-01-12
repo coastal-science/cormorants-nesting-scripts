@@ -280,10 +280,6 @@ def main(rescale_factor=4):
             else:
                 draw.line(list(zip(*b.exterior.xy)), fill=color, width=15)
 
-    print("Reducing Image")
-    im = im.reduce(factor=rescale_factor)
-    print(f"New image size is: {im.size}")
-
     #print("Draw Ground truth Annotations")
     if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
         print("Draw Ground truth Annotations")
@@ -291,6 +287,10 @@ def main(rescale_factor=4):
                                              tile_size = anno_tile_size, rescale_factor=1)
     else:
         print("Skipping Ground truth Annotations")
+
+    print("Reducing Image")
+    im = im.reduce(factor=rescale_factor)
+    print(f"New image size is: {im.size}")
 
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
