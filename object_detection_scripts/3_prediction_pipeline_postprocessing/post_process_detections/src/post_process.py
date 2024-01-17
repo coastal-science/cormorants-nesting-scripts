@@ -70,12 +70,21 @@ def tiles_share_edge(tile1, tile2):
     return False
 
 
-def load_mask(f, resize_dims=(74.576, 33.620)):
+def load_mask(f, resize_dims, mask_name=None):
     df = pd.read_csv(f)
-    print(f"Loading mask for {df['img.img_path'].iloc[0]}")
-    mask_points = [(d['x'], d['y']) for d in ast.literal_eval(df['anno.data'].iloc[0])]
-    resized_points = [(x*resize_dims[0], y*resize_dims[1]) for x, y in mask_points]
-    mask_geom = Polygon(resized_points)
+    if len(df) == 1:
+        print(f"Loading mask for {df['img.img_path'].iloc[0]}")
+        mask_points = [(d['x'], d['y']) for d in ast.literal_eval(df['anno.data'].iloc[0])]
+        resized_points = [(x*resize_dims[0], y*resize_dims[1]) for x, y in mask_points]
+        mask_geom = Polygon(resized_points)
+    elif mask_name:
+        matching_masks = df[df['img.img_path'].str.contains(mask_name)]
+        if len(matching_masks) == 1:
+            print(f"Loading mask for {matching_masks['img.img_path'].iloc[0]}")
+            mask_points = [(d['x'], d['y']) for d in ast.literal_eval(matching_masks['anno.data'].iloc[0])]
+            resized_points = [(x * resize_dims[0], y * resize_dims[1]) for x, y in mask_points]
+            mask_geom = Polygon(resized_points)
+
     return mask_geom
 
 
@@ -181,7 +190,7 @@ def apply_mask(mask_file, original_pano, tile_size, df):
     im_w, im_h = Image.open(original_pano).size
     resize_dims = (im_w/tile_size, im_h/tile_size)
 
-    mask = load_mask(mask_file, resize_dims)
+    mask = load_mask(mask_file, resize_dims, mask_name=Path(original_pano).stem)
 
     box_geoms = []
     for image, det_box in zip(df['image'], df['detection_boxes']):
@@ -232,6 +241,7 @@ def main(detection_csv, mask=False, deduplicate_nests=False, merge_duplicate_nes
         print("Removing Duplicate Nests...")
         df = remove_duplicate_nests(df, merge_duplicates=merge_duplicate_nests)
 
+    print("Writing Output File ...")
     df.to_csv(out_file, index=False)
 
 
@@ -252,6 +262,6 @@ if __name__ == '__main__':
          deduplicate_nests=args.deduplicate_nests,
          merge_duplicate_nests=args.merge_duplicate_nests,
          mask_file=args.mask_file, 
-         original_pano=args.original_pano, 
+         original_pano=args.original_pano,
          tile_size=args.tile_size, 
          out_file=args.out_file)
