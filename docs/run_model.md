@@ -72,15 +72,28 @@ Create a JSON document which specifies image & task-path pairs. The file should 
   sb --time=1:0:0 run_model_on_new_pano.sh
   ```
   
-  
 * You will receive a response such as `Submitted batch job 123456789` which shows your job ID (in this case, `1234556789`).    
 
 ## 4. Monitoring your job
-* Run `sq` to see your job's progress.
-* Inspect the slurm logs using `cat`, `less`, `tail`, `head`, etc. Your slurm log will be found in a file name `slurm-<jobid>.out`. e.g. `slurm-123456789.out`
-* Emails -- If you've setup user_profile.sh & using the `sb` command, you should receive an email when your job starts, is cancelled, fails, or completes.
-* `grep "LOG STATUS:" slurm-12345679.out`
+* Run `sq` to see your job's progress (is it pending, running, etc)
+* If you've setup user_profile.sh & using the `sb` command, you should receive an email when your job starts, is cancelled, fails, or completes.
+* Inspect the slurm logs using `cat`, `less`, `tail`, `head`, etc. Your slurm log will be found in a file name `slurm-<jobid>.out` (e.g. `slurm-123456789.out`). I find the following commands particularly useful: 
+  * Determine which panorama is currently being processed (and which have already been processed):
+    ```shell
+    grep "LOG STATUS:" slurm-<jobid>.out
+    ```
+  * View the progress being made in processing a particular panorama. This will show a progress bar (including a time remaining estimate). Run the command again to see an updated progress bar. 
+    ```shell
+    tail -3 slurm-<jobid>.out; echo "\n"
+    ```
 
+## 5. Finding the Results
+* You will receive an email when your job ends. This email will indicate
+  whether the job completed successfully or encountered an error and failed along the way.
+* If the job finished successfully, you can examine the output which will be saved in a sub-directory of `/projects/ctb-ruthjoy/jilliana/Tensorflow/workspace/cormorants-nesting-scripts/object_detection_scripts/3_prediction_pipeline_postprocessing/post_process_detections/output/`. 
+* If there was an error that prevented the job from being successful, you can
+  examine the bottom of the log file using `tail -3 slurm-<jobid>.out; echo "\n"` to see what went wrong.
+  
 ----
 ### Configure Your User Profile
 `nano user_profile.sh`
