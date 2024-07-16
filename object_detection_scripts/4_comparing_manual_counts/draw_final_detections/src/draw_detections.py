@@ -33,7 +33,7 @@ def find_full_canvas_dims(df):
     return max(tile_xs) + 1, max(tile_ys) + 1
 
 
-def create_detection_geom(detection_box, tile_width=1000, tile_height=1000):
+def create_detection_geom(detection_box, tile_width=1000, tile_height=1000, scale_factor=1):
     """ Create a Shapely bounding box for the `detection_box`
     
     To draw a `detection_box` box it must be like TensorFlow format and use entire pano coordinate.
@@ -41,11 +41,12 @@ def create_detection_geom(detection_box, tile_width=1000, tile_height=1000):
         detection_box (list): array of floating point values between 0 and 1, for coordinates [top, left, bottom, right] (TF format)
         tile_width (number): scaling factor to map 0-1 values into the actual tile width
         tile_height (number): scaling factor to map 0-1 values into the actual tile height
+        scale_factor (number | [number,number] ): scaling factor to accommodate upscaling/rescaling due to reduce(). Default 1.
 
     Returns:
         box(shapely.geometry.box):
     """
-
+    scale_factor_x, scale_factor_y = validate_scale(scale_factor)
     x1, y1, x2, y2 = detection_box  # format: [x1, y1, x2, y2]
     b = box(minx=(x1) * tile_width, miny=(y1) * tile_height,
             maxx=(x2) * tile_width, maxy=(y2) * tile_height)
@@ -239,6 +240,39 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_
         draw.text((np.mean([x0, x1]), np.mean([y0, y1])), str(int(i)), fill='DeepPink', font=font, anchor='mm')
 
     return draw
+
+def validate_scale(scale_factor):
+    """ Validate argument inputs for 1D or 2D 'scale' or 'rescale' -ing.
+
+    Args:
+        scale_factor (_type_): int | float | numeric | [numeric, numeric] | (numeric, numeric)
+
+    Returns:
+        numeric, numeric: pair of scale factors for _x and _y coordinates
+            if a single number is provided in `scale_factor`, then the same scale is used for _x and _y.
+            if a pair of numbers are provided in `scale_factor`, then they are returned for _x and _y, respectively.
+            Default 1,1.
+    """
+    
+    if scale_factor == None:
+        rescale_factor_x, rescale_factor_y = 1, 1
+
+    elif isinstance(scale_factor, int) or isinstance(scale_factor, float):
+        rescale_factor_x = scale_factor
+        rescale_factor_y = scale_factor
+    
+    elif isinstance(scale_factor, tuple) or isinstance(scale_factor, list):
+        assert len(scale_factor) == 2, "Attempting to scale along 3 dimensions. Only scaling in 2 dimensions is supported."
+        
+        rescale_factor_x, rescale_factor_y = scale_factor[0], scale_factor[1]
+        
+        assert (isinstance(rescale_factor_x, int) or isinstance(rescale_factor_x, float)) and (isinstance(rescale_factor_y, int) or isinstance(rescale_factor_y, float)), f"Non numeric scale factors ({scale_factor}) are provided. Must be of type int or float."
+    
+    else:
+        rescale_factor_x, rescale_factor_y = 1, 1
+        print(f"Warning: scale factor ({scale_factor}) could not be validated, setting rescaling to 1")
+
+    return rescale_factor_x, rescale_factor_y
 
 
 def main(rescale_factor=4):
