@@ -11,6 +11,7 @@ import json
 import ast
 import tqdm
 import numpy as np
+from functools import reduce
 
 convert_version = lambda x : tuple(map(int, x.split(".")))
 PILLOW_VERSION = convert_version(PILLOW_VERSION)
@@ -274,6 +275,9 @@ def main(rescale_factor=4):
         draw = draw_mask(draw, mask_file)
 
     print("Drawing Boxes")
+   
+    font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
+
     if detections_file is not None:
         for b, detect in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
             idx, lbl = detect
@@ -284,6 +288,11 @@ def main(rescale_factor=4):
                 
             coords = list(zip(*b.exterior.xy))
             draw_box(draw, color, coords)  
+
+            horizontal_alignment = 'right'
+            text_str = f"detection_id: {idx:.0f}"
+
+            draw_text(draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
 
     #print("Draw Ground truth Annotations")
     if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
@@ -300,6 +309,37 @@ def main(rescale_factor=4):
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
     im.save(out_file)
+
+
+def draw_text(draw:ImageDraw, coords:list[tuple], text_str:str, align:str, font:ImageFont, outline=True):
+    """Write `text` inside at bounding box attached to the upper left corner of the existing bbox at `coords`.
+
+    Args:
+        draw (ImageDraw): _description_
+        coords (list[tuple]): Sequence of coordinate pairs for the bbox or polygon. The smallest corner (upper left; 0,0) will be used to anchor the text bbox and text
+        text_str (str): Text to write
+        align (str): Same as the 'align' parameter in ImageDraw.text. Corresponds to horizontal alignment
+        font (ImageFont): _description_
+        outline (bool): Whether to draw the enclosing bounding box or just the text.
+    """
+    
+    bbox_x0, bbox_y0 = reduce(min, map(lambda x: x[0], coords)), reduce(min, map(lambda x: x[1], coords)) # left ascender corner of bbox
+
+    text_box = font.getbbox(text_str) # text_box = x1, y1, x2, y2
+    text_height = text_box[3] - text_box[1]
+    
+    text_box = draw.textbbox((bbox_x0, bbox_y0-text_height), 
+                            #  adjust the top-left coordinate by text_height
+                            text_str,
+                            font=font,
+                            align=align,
+                            anchor='la',
+                            # font_size=32,  # Added in version 10.1.0.
+                            )
+    
+    if outline:
+        draw.rectangle(text_box, outline='red', width=15)
+    draw.text((text_box[0], text_box[1]), text_str, fill='red', font=font, anchor='la') # left ascender corner of text box
 
 def draw_box(draw:ImageDraw, color, coords):
     if PILLOW_VERSION >= convert_version('9.0'):
