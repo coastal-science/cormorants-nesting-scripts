@@ -210,10 +210,10 @@ def draw_mask(draw, mask_file):
 
 def draw_tiles(draw, tile_height, tile_width):
     width, height = draw.im.size
-    for x in range(width // tile_width + 1):
+    for x in range(int(width // tile_width) + 1 ):
         draw.line([(x*tile_width, 0), (x*tile_width, height)], fill='gainsboro', width=5)
 
-    for y in range(height // tile_height + 1):
+    for y in range(int(height // tile_height) + 1):
         draw.line([(0, y*tile_height), (width, y*tile_height)], fill='gainsboro', width=5)
     
     draw.rectangle([0, 0, width, height], outline='gainsboro', width=5)
