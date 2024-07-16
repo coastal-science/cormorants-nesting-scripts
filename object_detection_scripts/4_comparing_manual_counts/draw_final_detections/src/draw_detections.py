@@ -464,7 +464,7 @@ def main(rescale_factor=4):
    
     # font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
     font = get_font()
-    
+
     if detections_file is not None and individual_class is not None and indv_pano: #  explicitly check for None as it is possible individual_class=0,
         print(" Drawing Boxes on individual cropped images and saving results")
         individ_detec = out_file.with_name(out_file.stem) / 'detection_tiles'
@@ -476,7 +476,7 @@ def main(rescale_factor=4):
         detections['indv_name'] = detections['index'].map(crop_file_name)
     else:
         print(" Skipping Drawing Boxes, --detections_file is missing, --individual_class is not selected or explicitly skipped with --no-indv")
-    
+
     print("Drawing Boxes on full pano")
     if detections_file is not None and full_pano:
         assert im.mode == 'RGBA'
