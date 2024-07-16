@@ -179,12 +179,12 @@ def load_mask(f, resize_dims, mask_name=None):
 
 def draw_tiles(draw, tile_width, tile_height):
     width, height = draw.im.size
-    for x in range(int(width // tile_width) + 1 ):
+    for x in range(int(width // tile_width) + 1):
         draw.line([(x*tile_width, 0), (x*tile_width, height)], fill='gainsboro', width=size_options.small)
 
     for y in range(int(height // tile_height) + 1):
         draw.line([(0, y*tile_height), (width, y*tile_height)], fill='gainsboro', width=size_options.small)
-    
+
     draw.rectangle([0, 0, width, height], outline='gainsboro', width=size_options.small)
 
     return draw
