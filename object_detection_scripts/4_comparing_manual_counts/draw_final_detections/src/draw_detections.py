@@ -33,9 +33,9 @@ def find_full_canvas_dims(df):
 
 
 def create_detection_geom(detection_box, tile_width=1000, tile_height=1000):
-    """ Create a Shapely bounding box for the `detecton_box`
+    """ Create a Shapely bounding box for the `detection_box`
     
-    To draw a `detecton_box` box it must be like TensorFlow format and use entire pano coordinate.
+    To draw a `detection_box` box it must be like TensorFlow format and use entire pano coordinate.
     Inputs:
         detection_box (list): array of floating point values between 0 and 1, for coordinates [top, left, bottom, right] (TF format)
         tile_width (number): scaling factor to map 0-1 values into the actual tile width
