@@ -217,8 +217,9 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, anno_
 
 def validate_scale(scale_factor):
     """ Validate argument inputs for 1D or 2D 'scale' or 'rescale' -ing.
-    
-    Inputs:
+
+
+    Args:
         scale_factor (_type_): int | float | numeric | [numeric, numeric] | (numeric, numeric)
 
     Returns:
@@ -231,15 +232,15 @@ def validate_scale(scale_factor):
     if scale_factor == None:
         rescale_factor_x, rescale_factor_y = 1, 1
 
-    elif isinstance(scale_factor, (int,float)):
+    elif isinstance(scale_factor, (int, float)):
         rescale_factor_x = scale_factor
         rescale_factor_y = scale_factor
-    
+
     elif isinstance(scale_factor, (Tuple, List)):
         assert len(scale_factor) == 2, "Attempting to scale along 3 dimensions. Only scaling in 2 dimensions is supported."
         
         rescale_factor_x, rescale_factor_y = scale_factor[0], scale_factor[1]
-        
+
         assert isinstance(rescale_factor_x, (int, float)) and isinstance(rescale_factor_y, (int, float)), f"Non numeric scale factors ({scale_factor}) are provided. Must be of type int or float."
     
     else:
