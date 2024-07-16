@@ -221,8 +221,10 @@ def draw_tiles(draw, tile_height, tile_width):
     return draw
 
 
-def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_size=3000,
-                                  rescale_factor=1):
+def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_size=3000, rescale_factor=1):
+    
+    rescale_factor_x, rescale_factor_y = validate_scale(rescale_factor)
+
     annotations = pd.read_csv(ground_truth_file).dropna(subset=['anno.data'])
     font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
     count = 0
@@ -232,10 +234,10 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_
         tile_y, tile_x, _ = tile_name.split('.')
         tile_w, tile_h = tile.size
         tile_x0, tile_y0, tile_x1, tile_y1 = get_bbox_coords(anno, tile_w, tile_h)
-        x0 = (tile_x0 + (int(tile_x)*tile_size)) / rescale_factor
-        y0 = (tile_y0 + (int(tile_y)*tile_size)) / rescale_factor
-        x1 = (tile_x1 + (int(tile_x)*tile_size)) / rescale_factor
-        y1 = (tile_y1 + (int(tile_y)*tile_size)) / rescale_factor
+        x0 = (tile_x0 + (int(tile_x)*tile_size)) / rescale_factor_x
+        y0 = (tile_y0 + (int(tile_y)*tile_size)) / rescale_factor_y
+        x1 = (tile_x1 + (int(tile_x)*tile_size)) / rescale_factor_x
+        y1 = (tile_y1 + (int(tile_y)*tile_size)) / rescale_factor_y
         draw.rectangle([x0, y0, x1, y1], outline='gold', width=15)
         draw.text((np.mean([x0, x1]), np.mean([y0, y1])), str(int(i)), fill='DeepPink', font=font, anchor='mm')
 
