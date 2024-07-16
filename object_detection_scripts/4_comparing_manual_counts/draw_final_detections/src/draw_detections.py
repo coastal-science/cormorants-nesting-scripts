@@ -150,7 +150,7 @@ def draw_mask(draw, mask_file, tile_width, tile_height, original_pano):
     if mask_points is None:
         print(f"  Skipping Drawing Mask, mask_name{mask_name} is not found in the --mask_file")
         return
-    
+
     mask_points = list(zip(*mask_points.exterior.xy))
 
     # draw.polygon(mask_points, outline='orange', width=size_options.large) #350 for super large
