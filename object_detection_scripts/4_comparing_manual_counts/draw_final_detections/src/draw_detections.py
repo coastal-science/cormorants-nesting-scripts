@@ -277,11 +277,9 @@ def main(rescale_factor=4):
                 color = '#90EE90'
             elif lbl == 1:
                 color = '#fc8d59'
-            if PILLOW_VERSION >= convert_version('9.0'):
-                draw.polygon(list(zip(*b.exterior.xy)), outline=color, width=15)
-            else:
-                draw.line(list(zip(*b.exterior.xy)), fill=color, width=15)
-
+            coords = list(zip(*b.exterior.xy))
+            draw_box(draw, color, coords)  
+                     
     #print("Draw Ground truth Annotations")
     if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
         print("Draw Ground truth Annotations")
@@ -297,6 +295,12 @@ def main(rescale_factor=4):
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
     im.save(out_file)
+
+def draw_box(draw:ImageDraw, color, coords):
+    if PILLOW_VERSION >= convert_version('9.0'):
+        draw.polygon(coords, outline=color, width=15)
+    else:
+        draw.line(coords, fill=color, width=15)
 
 
 if __name__ == '__main__':
