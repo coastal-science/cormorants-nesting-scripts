@@ -243,7 +243,10 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_
 def main(rescale_factor=4):
     if detections_file is not None:
         detections = pd.read_csv(detections_file)
+        detections = detections.reset_index() # ensure RangeIndex is converted to list index to produce IDs
+        
         assert detections['detection_classes'].hasnans == False, f'detections_file={detections_file} must not contain null classes' + '\n' + 'use output of post_process_detections'
+        
         detections = filter_detections(detections, threshold_dict)
 
     print("Reading in Image")
@@ -253,12 +256,12 @@ def main(rescale_factor=4):
     if detections_file is not None:
         box_geoms = []
         box_labels = []
-        for image, det_box, label in zip(detections['image'], detections['detection_boxes'],
-                                         detections['detection_classes']):
+        for image, det_box, label, ind in zip(detections['image'], detections['detection_boxes'],
+                                         detections['detection_classes'], detections['index']):
             box_geoms.append(
                 create_detection_geom(ast.literal_eval(det_box), tile_width=tile_size,
                                       tile_height=tile_size))
-            box_labels.append(label)
+            box_labels.append((ind, label))
 
     print("Loading Canvas")
     draw = ImageDraw.Draw(im)
@@ -272,14 +275,16 @@ def main(rescale_factor=4):
 
     print("Drawing Boxes")
     if detections_file is not None:
-        for b, lbl in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
+        for b, detect in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
+            idx, lbl = detect
             if lbl == 0:
                 color = '#90EE90'
             elif lbl == 1:
                 color = '#fc8d59'
+                
             coords = list(zip(*b.exterior.xy))
             draw_box(draw, color, coords)  
-                     
+
     #print("Draw Ground truth Annotations")
     if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
         print("Draw Ground truth Annotations")
