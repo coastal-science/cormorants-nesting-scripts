@@ -288,6 +288,24 @@ def main(rescale_factor=4):
 
     print("Reading in Image")
     im = Image.open(img_file)
+    width_actual, height_actual = im.size
+
+    print("Reducing Image")
+    im = im.reduce(factor=rescale_factor)
+    width_reduced, height_reduced = im.size
+    
+    width_scale = width_actual / width_reduced
+    height_scale = height_actual / height_reduced
+    upscale_factor = width_scale, height_scale # NOTE: due to floating point multiplication and division, fp rounding errors may occur e.g. 1e-11
+
+    print(f"New image size is: {width_reduced, height_reduced}")
+    print(f"""
+        {width_actual=}, {height_actual=}
+        {width_scale=}, {height_scale=}
+        {width_reduced=}, {height_reduced=}
+        scaled_back={width_reduced * width_scale}, {height_reduced * height_scale}
+        {upscale_factor=}
+        """)
 
     print("Collect Boxes")
     if detections_file is not None:
@@ -296,15 +314,15 @@ def main(rescale_factor=4):
         for image, det_box, label, ind in zip(detections['image'], detections['detection_boxes'],
                                          detections['detection_classes'], detections['index']):
             box_geoms.append(
-                create_detection_geom(ast.literal_eval(det_box), tile_width=tile_size,
-                                      tile_height=tile_size))
-            box_labels.append((ind, label))
+                create_detection_geom(ast.literal_eval(det_box), tile_width=tile_size/height_scale,
+                                      tile_height=tile_size/width_scale))
+            box_labels.append((ind, label))    
 
     print("Loading Canvas")
     draw = ImageDraw.Draw(im)
 
     print("Draw Tile Borders")
-    draw = draw_tiles(draw, tile_size, tile_size)
+    draw = draw_tiles(draw, tile_size/height_scale, tile_size/width_scale)
 
     print("Draw Mask")
     if mask_file and mask_file.is_file() and mask_file.exists(): 
@@ -337,10 +355,6 @@ def main(rescale_factor=4):
                                              tile_size = anno_tile_size, rescale_factor=1)
     else:
         print("Skipping Ground truth Annotations")
-
-    print("Reducing Image")
-    im = im.reduce(factor=rescale_factor)
-    print(f"New image size is: {im.size}")
 
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
