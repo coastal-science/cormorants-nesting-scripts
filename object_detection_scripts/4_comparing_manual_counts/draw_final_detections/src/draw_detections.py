@@ -12,11 +12,24 @@ import ast
 import tqdm
 import numpy as np
 from functools import reduce
+from dataclasses import dataclass
 
 convert_version = lambda x : tuple(map(int, x.split(".")))
 PILLOW_VERSION = convert_version(PILLOW_VERSION)
 Image.MAX_IMAGE_PIXELS = 3000000000
 
+@dataclass
+class Sizes:
+    """Class to parametrize drawing options (brush stroke) dependent on size of panorama image 
+    These may vary before or after a reduce(). 
+    """
+    small: int
+    medium: int
+    large: int
+
+brush_reduced = Sizes(1, 3, 5)
+brush_raw = Sizes(5, 15, 75)
+brush_size = brush_reduced
 
 def filter_detections(detections, threshold_dict={}):
     for label, thresh in threshold_dict.items():
@@ -204,19 +217,19 @@ def draw_mask(draw, mask_file):
     df = pd.read_csv(mask_file)
     im_w, im_h = draw.im.size
     mask_points = [(im_w*d['x'], im_h*d['y']) for d in ast.literal_eval(df['anno.data'].iloc[0])]
-    draw.polygon(mask_points, outline='orange', width=75) #350 for super large
+    draw.polygon(mask_points, outline='orange', width=brush_size.large) #350 for super large
     return draw
 
 
 def draw_tiles(draw, tile_height, tile_width):
     width, height = draw.im.size
     for x in range(int(width // tile_width) + 1 ):
-        draw.line([(x*tile_width, 0), (x*tile_width, height)], fill='gainsboro', width=5)
+        draw.line([(x*tile_width, 0), (x*tile_width, height)], fill='gainsboro', width=brush_size.small)
 
     for y in range(int(height // tile_height) + 1):
-        draw.line([(0, y*tile_height), (width, y*tile_height)], fill='gainsboro', width=5)
+        draw.line([(0, y*tile_height), (width, y*tile_height)], fill='gainsboro', width=brush_size.small)
     
-    draw.rectangle([0, 0, width, height], outline='gainsboro', width=5)
+    draw.rectangle([0, 0, width, height], outline='gainsboro', width=brush_size.small)
 
     return draw
 
@@ -238,7 +251,7 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_
         y0 = (tile_y0 + (int(tile_y)*tile_size)) / rescale_factor_y
         x1 = (tile_x1 + (int(tile_x)*tile_size)) / rescale_factor_x
         y1 = (tile_y1 + (int(tile_y)*tile_size)) / rescale_factor_y
-        draw.rectangle([x0, y0, x1, y1], outline='gold', width=15)
+        draw.rectangle([x0, y0, x1, y1], outline='gold', width=brush_size.medium)
         draw.text((np.mean([x0, x1]), np.mean([y0, y1])), str(int(i)), fill='DeepPink', font=font, anchor='mm')
 
     return draw
@@ -388,14 +401,14 @@ def draw_text(draw:ImageDraw, coords:list[tuple], text_str:str, align:str, font:
                             )
     
     if outline:
-        draw.rectangle(text_box, outline='red', width=15)
+        draw.rectangle(text_box, outline='red', width=brush_size.medium)
     draw.text((text_box[0], text_box[1]), text_str, fill='red', font=font, anchor='la') # left ascender corner of text box
 
 def draw_box(draw:ImageDraw, color, coords):
     if PILLOW_VERSION >= convert_version('9.0'):
-        draw.polygon(coords, outline=color, width=15)
+        draw.polygon(coords, outline=color, width=brush_size.medium)
     else:
-        draw.line(coords, fill=color, width=15)
+        draw.line(coords, fill=color, width=brush_size.medium)
 
 
 if __name__ == '__main__':
