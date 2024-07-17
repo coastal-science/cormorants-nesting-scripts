@@ -391,7 +391,9 @@ def draw_text(draw:ImageDraw, coords:list[tuple], text_str:str, align:str, font:
     bbox_x0, bbox_y0 = reduce(min, map(lambda x: x[0], coords)), reduce(min, map(lambda x: x[1], coords)) # left ascender corner of bbox
 
     text_box = font.getbbox(text_str) # text_box = x1, y1, x2, y2
-    text_height = text_box[3] - text_box[1]
+    # Coordinates are calculated manually (using the upper left corner, 0,0 as reference origin)
+    # TODO: Calculate text box coordinates programatically using shapely geometric objects
+    text_height = text_box[3] - text_box[1] 
     
     text_box = draw.textbbox((bbox_x0, bbox_y0-text_height), 
                             #  adjust the top-left coordinate by text_height
