@@ -69,11 +69,13 @@ jq -c '.[]' $JSON_FILE | while read i; do
     echo "LOG STATUS: Post Processing..."
     cd $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections
     mkdir -p $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/output/$TASK_PATH/
+    PARENT_PATH=$(dirname $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/input/$TASK_PATH/)
+    PARENT_PATH=$(dirname $PARENT_PATH)
     python3 src/post_process.py \
       --mask \
       --detections_file $PIPELINE/3_prediction_pipeline_postprocessing/predict/output/$TASK_PATH/detections.csv \
       --original_pano "$IMAGE" \
-      --mask_file $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/input/$TASK_PATH/mask.csv \
+      --mask_file $PARENT_PATH/mask.csv \
       --tile_size 1000 \
       --out_file $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/output/$TASK_PATH/post_processed_detections_masked.csv \
       --deduplicate_nests \
