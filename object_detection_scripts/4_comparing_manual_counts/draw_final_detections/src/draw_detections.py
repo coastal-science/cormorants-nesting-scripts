@@ -223,7 +223,7 @@ def draw_mask(draw, mask_file):
     return draw
 
 
-def draw_tiles(draw, tile_height, tile_width):
+def draw_tiles(draw, tile_width, tile_height):
     width, height = draw.im.size
     for x in range(int(width // tile_width) + 1 ):
         draw.line([(x*tile_width, 0), (x*tile_width, height)], fill='gainsboro', width=brush_size.small)
@@ -329,15 +329,15 @@ def main(rescale_factor=4):
         for image, det_box, label, ind in zip(detections['image'], detections['detection_boxes'],
                                          detections['detection_classes'], detections['index']):
             box_geoms.append(
-                create_detection_geom(ast.literal_eval(det_box), tile_width=tile_size/height_scale,
-                                      tile_height=tile_size/width_scale))
+                create_detection_geom(ast.literal_eval(det_box), tile_width=tile_size/width_scale,
+                                      tile_height=tile_size/height_scale))
             box_labels.append((ind, label))    
 
     print("Loading Canvas")
     draw = ImageDraw.Draw(im)
 
     print("Draw Tile Borders")
-    draw = draw_tiles(draw, tile_size/height_scale, tile_size/width_scale)
+    draw = draw_tiles(draw, tile_width=tile_size/width_scale, tile_height=tile_size/height_scale,)
 
     print("Draw Mask")
     if mask_file and mask_file.is_file() and mask_file.exists(): 
