@@ -41,6 +41,7 @@ def filter_detections(detections, threshold_dict={}):
 
 def find_full_canvas_dims(df):
     tile_ys, tile_xs = zip(*df['image'].transform(lambda x: Path(x).name.split('.')[:2]))
+    # TODO: This function is only used by the other unused function, can it be removed?
     tile_xs = [int(x) for x in tile_xs]
     tile_ys = [int(y) for y in tile_ys]
     return max(tile_xs) + 1, max(tile_ys) + 1
@@ -68,6 +69,7 @@ def create_detection_geom(detection_box, tile_width=1000, tile_height=1000, scal
 
 def plot_mask_result(mask, df):
     # Plot Mask
+    # TODO: This function is unused, can it be removed?
     plt.plot(*mask.exterior.xy, color='#FFD700', linewidth=2)  # Goldish
 
     # Plot Boxes
@@ -259,7 +261,7 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_
 def validate_scale(scale_factor):
     """ Validate argument inputs for 1D or 2D 'scale' or 'rescale' -ing.
 
-    Args:
+        TODO: Can this function be replaced with appropriate type hint? Take into consideration python 3.7 support due to object_detection TF package in the pip environment
         scale_factor (_type_): int | float | numeric | [numeric, numeric] | (numeric, numeric)
 
     Returns:
