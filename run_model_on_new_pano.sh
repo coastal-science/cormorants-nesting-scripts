@@ -10,7 +10,7 @@
 . utils.sh # progress()
 
 # Prepare Environment
-module load python/3.7 gcc/9.3.0 arrow/2.0.0 cuda cudnn geos
+module load StdEnv/2020 python/3.7 gcc/9.3.0 arrow/2.0.0 cuda cudnn geos
 source config-env.sh
 
 source ${ENVDIR}/bin/activate && \
