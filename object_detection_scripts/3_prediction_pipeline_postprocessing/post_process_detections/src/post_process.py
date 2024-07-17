@@ -120,6 +120,7 @@ def find_duplicate_detections(to_process_df):
 
 
 def remove_duplicate_nests(df, merge_duplicates=False):
+    assert not df.empty, "No detections provided. Cannot remove duplicates."
     df = df.sort_values(by='detection_scores', ascending=False).reset_index(drop=True)
 
     nest_class = 1
@@ -187,6 +188,7 @@ def merge_duplicate_nests(df, duplicates):
 
 
 def apply_mask(mask_file, original_pano, tile_size, df):
+    assert not df.empty, "No detections provided. Cannot apply mask."
     im_w, im_h = Image.open(original_pano).size
     resize_dims = (im_w/tile_size, im_h/tile_size)
 
