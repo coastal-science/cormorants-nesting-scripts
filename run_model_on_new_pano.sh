@@ -69,8 +69,8 @@ jq -c '.[]' $JSON_FILE | while read i; do
     echo "LOG STATUS: Post Processing..."
     cd $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections
     mkdir -p $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/output/$TASK_PATH/
-    PARENT_PATH=$(dirname $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/input/$TASK_PATH/)
-    PARENT_PATH=$(dirname $PARENT_PATH)
+    PARENT_PATH=$(dirname $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/input/$TASK_PATH/) # model directory (e.g. snb5_cn_hg_v9)
+    PARENT_PATH=$(dirname $PARENT_PATH). # location/site directory (e.g. IWMB)
     python3 src/post_process.py \
       --mask \
       --detections_file $PIPELINE/3_prediction_pipeline_postprocessing/predict/output/$TASK_PATH/detections.csv \
