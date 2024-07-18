@@ -39,14 +39,6 @@ def filter_detections(detections, threshold_dict={}):
     return detections
 
 
-def find_full_canvas_dims(df):
-    tile_ys, tile_xs = zip(*df['image'].transform(lambda x: Path(x).name.split('.')[:2]))
-    # TODO: This function is only used by the other unused function, can it be removed?
-    tile_xs = [int(x) for x in tile_xs]
-    tile_ys = [int(y) for y in tile_ys]
-    return max(tile_xs) + 1, max(tile_ys) + 1
-
-
 def create_detection_geom(detection_box, tile_width=1000, tile_height=1000, scale_factor=1):
     """ Create a Shapely bounding box for the `detection_box`
     
