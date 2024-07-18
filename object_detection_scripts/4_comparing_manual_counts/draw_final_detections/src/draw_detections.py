@@ -13,6 +13,7 @@ import tqdm
 import numpy as np
 from functools import reduce
 from dataclasses import dataclass
+from typing import List, Tuple
 
 convert_version = lambda x : tuple(map(int, x.split(".")))
 PILLOW_VERSION = convert_version(PILLOW_VERSION)
@@ -241,7 +242,7 @@ def validate_scale(scale_factor):
         rescale_factor_x = scale_factor
         rescale_factor_y = scale_factor
     
-    elif isinstance(scale_factor, tuple) or isinstance(scale_factor, list):
+    elif isinstance(scale_factor, Tuple) or isinstance(scale_factor, List):
         assert len(scale_factor) == 2, "Attempting to scale along 3 dimensions. Only scaling in 2 dimensions is supported."
         
         rescale_factor_x, rescale_factor_y = scale_factor[0], scale_factor[1]
@@ -276,14 +277,12 @@ def main(rescale_factor=4):
     height_scale = height_actual / height_reduced
     upscale_factor = width_scale, height_scale # NOTE: due to floating point multiplication and division, fp rounding errors may occur e.g. 1e-11
 
-    print(f"New image size is: {width_reduced, height_reduced}")
     print(f"""
-        {width_actual=}, {height_actual=}
-        {width_scale=}, {height_scale=}
-        {width_reduced=}, {height_reduced=}
-        scaled_back={width_reduced * width_scale}, {height_reduced * height_scale}
-        {upscale_factor=}
-        """)
+          Original image size is: {width_actual, height_actual}
+          New image size is: {width_reduced, height_reduced}
+          The actual/reduced scales are {width_scale}, {height_scale}
+          scaled_back={width_reduced * width_scale}, {height_reduced * height_scale}
+          """)
 
     print("Collect Boxes")
     if detections_file is not None:
@@ -339,7 +338,7 @@ def main(rescale_factor=4):
     im.save(out_file)
 
 
-def draw_text(draw:ImageDraw, coords:list[tuple], text_str:str, align:str, font:ImageFont, outline=True):
+def draw_text(draw:ImageDraw, coords:List[Tuple], text_str:str, align:str, font:ImageFont, outline=True):
     """Write `text` inside at bounding box attached to the upper left corner of the existing bbox at `coords`.
 
     Args:
