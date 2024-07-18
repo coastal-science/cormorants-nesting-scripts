@@ -59,35 +59,6 @@ def create_detection_geom(detection_box, tile_width=1000, tile_height=1000, scal
     return b
 
 
-def plot_mask_result(mask, df):
-    # Plot Mask
-    # TODO: This function is unused, can it be removed?
-    plt.plot(*mask.exterior.xy, color='#FFD700', linewidth=2)  # Goldish
-
-    # Plot Boxes
-    box_geoms = []
-    for image, det_box in zip(df['image'], df['detection_boxes']):
-        box_geoms.append(create_detection_geom(ast.literal_eval(det_box)))
-
-    for b in box_geoms:
-        if b.intersects(mask):
-            plt.plot(*b.exterior.xy, color='#87EC8D', alpha=0.5)  # Greenish
-
-        else:
-            plt.plot(*b.exterior.xy, color='#D84223', alpha=0.5)  # Redish
-
-    # Show Image
-    im = Image.open(img_file)
-    x_max, y_max = find_full_canvas_dims(df)
-    plt.imshow(im, extent=[0, 74.576, 33.620, 0], alpha=0.8)
-
-    plt.xticks([])
-    plt.yticks([])
-    plt.savefig(
-        'cormorants-nesting-scripts/object_detection_scripts/post_process_detections/output/diagrams/masking.png',
-        dpi=600)
-
-
 # From lost_to_tfrecord.py
 def standardize_lost(image_directory, annotation_file):
     def get_img_size(img_name):
