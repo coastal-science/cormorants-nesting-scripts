@@ -2,15 +2,15 @@
 #SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=2  		# Look at Cluster docs for CPU/GPU ratio 
 #SBATCH --mem=16000M       		# Memory proportional to GPUs: 32000 Cedar
-#SBATCH --time=0-1:00:00     		# DD-HH:MM:SS
-#SBATCH --mail-user=jilliana@sfu.ca
 #SBATCH --mail-type=ALL
+##SBATCH --time=0-1:00:00     		# DD-HH:MM:SS
+##SBATCH --mail-user=no-reply@sfu.ca
 
 # Load functions
 . utils.sh # progress()
 
 # Prepare Environment
-module load python/3.7 gcc/9.3.0 arrow/2.0.0 cuda cudnn geos
+module load StdEnv/2020 python/3.7 gcc/9.3.0 arrow/2.0.0 cuda cudnn geos
 source config-env.sh
 
 source ${ENVDIR}/bin/activate && \
@@ -69,11 +69,13 @@ jq -c '.[]' $JSON_FILE | while read i; do
     echo "LOG STATUS: Post Processing..."
     cd $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections
     mkdir -p $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/output/$TASK_PATH/
+    PARENT_PATH=$(dirname $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/input/$TASK_PATH/) # model directory (e.g. snb5_cn_hg_v9)
+    PARENT_PATH=$(dirname $PARENT_PATH). # location/site directory (e.g. IWMB)
     python3 src/post_process.py \
       --mask \
       --detections_file $PIPELINE/3_prediction_pipeline_postprocessing/predict/output/$TASK_PATH/detections.csv \
       --original_pano "$IMAGE" \
-      --mask_file $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/input/$TASK_PATH/mask.csv \
+      --mask_file $PARENT_PATH/mask.csv \
       --tile_size 1000 \
       --out_file $PIPELINE/3_prediction_pipeline_postprocessing/post_process_detections/output/$TASK_PATH/post_processed_detections_masked.csv \
       --deduplicate_nests \
