@@ -238,20 +238,20 @@ def validate_scale(scale_factor):
     if scale_factor == None:
         rescale_factor_x, rescale_factor_y = 1, 1
 
-    elif isinstance(scale_factor, int) or isinstance(scale_factor, float):
+    elif isinstance(scale_factor, (int,float)):
         rescale_factor_x = scale_factor
         rescale_factor_y = scale_factor
     
-    elif isinstance(scale_factor, Tuple) or isinstance(scale_factor, List):
+    elif isinstance(scale_factor, (Tuple, List)):
         assert len(scale_factor) == 2, "Attempting to scale along 3 dimensions. Only scaling in 2 dimensions is supported."
         
         rescale_factor_x, rescale_factor_y = scale_factor[0], scale_factor[1]
         
-        assert (isinstance(rescale_factor_x, int) or isinstance(rescale_factor_x, float)) and (isinstance(rescale_factor_y, int) or isinstance(rescale_factor_y, float)), f"Non numeric scale factors ({scale_factor}) are provided. Must be of type int or float."
+        assert isinstance(rescale_factor_x, (int, float)) and isinstance(rescale_factor_y, (int, float)), f"Non numeric scale factors ({scale_factor}) are provided. Must be of type int or float."
     
     else:
         rescale_factor_x, rescale_factor_y = 1, 1
-        print(f"Warning: scale factor ({scale_factor}) could not be validated, setting rescaling to 1")
+        print(f"Warning: scale factor argument ({scale_factor}) could not be validated. It is likely a TypeError. Ignoring rescaling.")
 
     return rescale_factor_x, rescale_factor_y
 
