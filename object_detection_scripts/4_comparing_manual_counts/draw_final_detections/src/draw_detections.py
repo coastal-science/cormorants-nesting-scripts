@@ -217,8 +217,9 @@ def main(rescale_factor=4):
     print("Drawing Boxes")
    
     font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
-
-    if detections_file is not None:
+    
+    print("Drawing Boxes on full pano")
+    if detections_file is not None and full_pano:
         for b, detect in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
             idx, lbl = detect
             if lbl == 0:
@@ -233,10 +234,12 @@ def main(rescale_factor=4):
             text_str = f"detection_id: {idx:.0f}"
 
             draw_text(draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
+    else:
+        print("Skipping Drawing Boxes on full pano")
 
-    #print("Draw Ground truth Annotations")
+
+    print("Draw Ground truth Annotations")
     if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
-        print("Draw Ground truth Annotations")
         draw = draw_ground_truth_annotations(draw, ground_truth_file, tile_directory,
                                              anno_tile_size = anno_tile_size, rescale_factor=(width_scale, height_scale))
     else:
