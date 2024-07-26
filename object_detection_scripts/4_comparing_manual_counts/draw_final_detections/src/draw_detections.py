@@ -228,7 +228,7 @@ def main(rescale_factor=4):
 
         draw_detections_individual(individual_class, im, box_geoms, box_labels, font, individ_detec)
     else:
-        print("Skipping Drawing Boxes")
+        print("  Skipping Drawing Boxes")
     
     print("Drawing Boxes on full pano")
     if detections_file is not None and full_pano:
@@ -247,7 +247,7 @@ def main(rescale_factor=4):
 
             draw_text(draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
     else:
-        print("Skipping Drawing Boxes on full pano")
+        print("  Skipping Drawing Boxes on full pano")
 
 
     print("Draw Ground truth Annotations")
@@ -255,7 +255,7 @@ def main(rescale_factor=4):
         draw = draw_ground_truth_annotations(draw, ground_truth_file, tile_directory,
                                              anno_tile_size = anno_tile_size, rescale_factor=(width_scale, height_scale))
     else:
-        print("Skipping Ground truth Annotations")
+        print("  Skipping Ground truth Annotations")
 
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
@@ -402,7 +402,9 @@ if __name__ == '__main__':
 
     out_file = Path(args.out_file) / img_file.name
     
+    print()
     print("DEBUG:")
+    print(f"  PILLOW_VERSION={PILLOW_VERSION}", end='\n\n')
     print(f"  img_file={img_file}", f"detections_file={detections_file}", f"mask_file={mask_file}", sep="\n  ", end='\n\n')
     print(f"  threshold_dict={threshold_dict}", f"tile_size={tile_size}", f"anno_tile_size={anno_tile_size}", f"rescale_factor={rescale_factor}", sep="\n  ", end='\n\n')
     print(f"  ground_truth_file={ground_truth_file}", f"tile_directory={tile_directory}", sep="\n  ", end='\n\n')
