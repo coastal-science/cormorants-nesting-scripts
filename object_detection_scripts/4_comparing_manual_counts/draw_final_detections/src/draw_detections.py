@@ -27,10 +27,12 @@ class Sizes:
     small: int
     medium: int
     large: int
+    text_alignment: str
+    buffer_pixels: int
 
-brush_reduced = Sizes(1, 3, 5)
-brush_raw = Sizes(5, 15, 75)
-brush_size = brush_reduced
+brush_reduced = Sizes(1, 3, 5, "left", 500)
+brush_raw = Sizes(5, 15, 75, "center", 250)
+size_options = brush_reduced
 
 def filter_detections(detections, threshold_dict={}):
     for label, thresh in threshold_dict.items():
@@ -183,24 +185,24 @@ def draw_mask(draw, mask_file):
     df = pd.read_csv(mask_file)
     im_w, im_h = draw.im.size
     mask_points = [(im_w*d['x'], im_h*d['y']) for d in ast.literal_eval(df['anno.data'].iloc[0])]
-    draw.polygon(mask_points, outline='orange', width=brush_size.large) #350 for super large
+    draw.polygon(mask_points, outline='orange', width=size_options.large) #350 for super large
     return draw
 
 
 def draw_tiles(draw, tile_width, tile_height):
     width, height = draw.im.size
     for x in range(int(width // tile_width) + 1 ):
-        draw.line([(x*tile_width, 0), (x*tile_width, height)], fill='gainsboro', width=brush_size.small)
+        draw.line([(x*tile_width, 0), (x*tile_width, height)], fill='gainsboro', width=size_options.small)
 
     for y in range(int(height // tile_height) + 1):
-        draw.line([(0, y*tile_height), (width, y*tile_height)], fill='gainsboro', width=brush_size.small)
+        draw.line([(0, y*tile_height), (width, y*tile_height)], fill='gainsboro', width=size_options.small)
     
-    draw.rectangle([0, 0, width, height], outline='gainsboro', width=brush_size.small)
+    draw.rectangle([0, 0, width, height], outline='gainsboro', width=size_options.small)
 
     return draw
 
 
-def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_size=3000, rescale_factor=1):
+def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, anno_tile_size=3000, rescale_factor=1):
     
     rescale_factor_x, rescale_factor_y = validate_scale(rescale_factor)
 
@@ -213,11 +215,11 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, tile_
         tile_y, tile_x, _ = tile_name.split('.')
         tile_w, tile_h = tile.size
         tile_x0, tile_y0, tile_x1, tile_y1 = get_bbox_coords(anno, tile_w, tile_h)
-        x0 = (tile_x0 + (int(tile_x)*tile_size)) / rescale_factor_x
-        y0 = (tile_y0 + (int(tile_y)*tile_size)) / rescale_factor_y
-        x1 = (tile_x1 + (int(tile_x)*tile_size)) / rescale_factor_x
-        y1 = (tile_y1 + (int(tile_y)*tile_size)) / rescale_factor_y
-        draw.rectangle([x0, y0, x1, y1], outline='gold', width=brush_size.medium)
+        x0 = (tile_x0 + (int(tile_x)*anno_tile_size)) / rescale_factor_x
+        y0 = (tile_y0 + (int(tile_y)*anno_tile_size)) / rescale_factor_y
+        x1 = (tile_x1 + (int(tile_x)*anno_tile_size)) / rescale_factor_x
+        y1 = (tile_y1 + (int(tile_y)*anno_tile_size)) / rescale_factor_y
+        draw.rectangle([x0, y0, x1, y1], outline='gold', width=size_options.medium)
         draw.text((np.mean([x0, x1]), np.mean([y0, y1])), str(int(i)), fill='DeepPink', font=font, anchor='mm')
 
     return draw
@@ -313,14 +315,14 @@ def main(rescale_factor=4):
         for b, detect in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
             idx, lbl = detect
             if lbl == 0:
-                color = '#90EE90'
+                color = '#90EE90' # Pastel Green
             elif lbl == 1:
-                color = '#fc8d59'
+                color = '#fc8d59' # Tan Hide
                 
             coords = list(zip(*b.exterior.xy))
             draw_box(draw, color, coords)  
 
-            horizontal_alignment = 'right'
+            horizontal_alignment = size_options.text_alignment
             text_str = f"detection_id: {idx:.0f}"
 
             draw_text(draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
@@ -329,7 +331,7 @@ def main(rescale_factor=4):
     if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
         print("Draw Ground truth Annotations")
         draw = draw_ground_truth_annotations(draw, ground_truth_file, tile_directory,
-                                             tile_size = anno_tile_size, rescale_factor=1)
+                                             anno_tile_size = anno_tile_size, rescale_factor=(width_scale, height_scale))
     else:
         print("Skipping Ground truth Annotations")
 
@@ -371,14 +373,14 @@ def draw_text(draw:ImageDraw, coords:List[Tuple], text_str:str, align:str, font:
                             )
     
     if outline:
-        draw.rectangle(text_box, outline='red', width=brush_size.medium)
+        draw.rectangle(text_box, outline='red', width=size_options.medium)
     draw.text((text_box[0], text_box[1]), text_str, fill='red', font=font, anchor='la') # left ascender corner of text box
 
 def draw_box(draw:ImageDraw, color, coords):
     if PILLOW_VERSION >= convert_version('9.0'):
-        draw.polygon(coords, outline=color, width=brush_size.medium)
+        draw.polygon(coords, outline=color, width=size_options.medium)
     else:
-        draw.line(coords, fill=color, width=brush_size.medium)
+        draw.line(coords, fill=color, width=size_options.medium)
 
 
 if __name__ == '__main__':
