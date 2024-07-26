@@ -35,6 +35,16 @@ brush_raw = Sizes(5, 15, 75, "center", 250)
 size_options = brush_reduced
 
 def filter_detections(detections, threshold_dict={}):
+    """Filter detections for a given threshold. Process the input DataFrame to keep the detections for a class above their provided detection_scores
+
+    Args:
+        detections (pd.DataFrame): DataFrame containing the column 'detection_classes' (containing integer labels) and 'detection_scores' (containing a float 0 - 1)
+        threshold_dict (dict, optional): Dictionary where the keys are detection_classes labels (int) and the values are detection_scores (float). Defaults to {}.
+
+    Returns:
+        pd.DataFrame: The input DataFrame with the detections above the criteria specified by threshold_dict
+    """
+
     for label, thresh in threshold_dict.items():
         detections = detections[(detections['detection_classes'] != label) |
                                 ((detections['detection_classes'] == label) &
@@ -245,7 +255,7 @@ def draw_text(draw:ImageDraw, coords:List[Tuple], text_str:str, align:str, font:
         coords (list[tuple]): Sequence of coordinate pairs for the bbox or polygon. The smallest corner (upper left; 0,0) will be used to anchor the text bbox and text
         text_str (str): Text to write
         align (str): Same as the 'align' parameter in ImageDraw.text. Corresponds to horizontal alignment
-        font (ImageFont): _description_
+        font (ImageFont): Font used for writing text in the image
         outline (bool): Whether to draw the enclosing bounding box or just the text.
     """
     
