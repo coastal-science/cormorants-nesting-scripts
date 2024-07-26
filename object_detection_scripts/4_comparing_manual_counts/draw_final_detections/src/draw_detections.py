@@ -62,58 +62,6 @@ def create_detection_geom(detection_box, tile_width=1000, tile_height=1000, scal
     return b
 
 
-# From lost_to_tfrecord.py
-def standardize_lost(image_directory, annotation_file):
-    def get_img_size(img_name):
-        image = Image.open(image_directory.joinpath(img_name))
-        try:
-            for orientation in ExifTags.TAGS.keys():
-                if ExifTags.TAGS[orientation] == 'Orientation':
-                    break
-            exif = dict(image._getexif().items())
-
-            if exif[orientation] == 3:
-                image = image.rotate(180, expand=True)
-            elif exif[orientation] == 6:
-                image = image.rotate(270, expand=True)
-            elif exif[orientation] == 8:
-                image = image.rotate(90, expand=True)
-
-            image.save(image_directory.joinpath(img_name))
-        except (AttributeError, KeyError, IndexError):
-            # cases: image don't have getexif
-            pass
-
-        w, h = image.size
-        image.close()
-
-        return w, h
-
-    # Read Annotations
-    raw = pd.read_csv(annotation_file)
-    annos = raw
-    # annos = raw[~pd.isna(raw['anno.anno_task_id'])]   # Remove instances with no annotations
-
-    # Filename
-    annos['filename'] = annos['img.img_path'].apply(lambda x: Path(x).name)
-
-    # Image Size
-    annos['width'], annos['height'] = list(zip(*annos['filename'].apply(get_img_size)))
-
-    # Class
-    label_lists = annos['anno.lbl.name'].apply(lambda x: ast.literal_eval(x))
-    label_lists.apply(lambda x: x[0] if len(x)>0 else None)
-    annos['class'] = label_lists.apply(lambda x: x[0] if len(x)>0 else None)
-
-    # Bounding Box Coordinates
-    coord_list = [get_bbox_coords(d, w, h) for d, w, h in zip(annos['anno.data'], annos['width'], annos['height'])]
-    annos['xmin'], annos['ymin'], annos['xmax'], annos['ymax'] = list(zip(*coord_list))
-
-    nicely_named = annos[['filename', 'width', 'height', 'class', 'xmin', 'ymin', 'xmax', 'ymax']]
-
-    return nicely_named
-
-
 def get_bbox_coords(raw_anno, w, h):
     if pd.isna(raw_anno):
         xmin = -1
@@ -128,57 +76,6 @@ def get_bbox_coords(raw_anno, w, h):
         ymax = (anno_dict['y']+anno_dict['h']/2) * h
 
     return xmin, ymin, xmax, ymax
-
-
-def standardize_lost(image_directory, annotation_file):
-    def get_img_size(img_name):
-        image = Image.open(image_directory.joinpath(img_name))
-        try:
-            for orientation in ExifTags.TAGS.keys():
-                if ExifTags.TAGS[orientation] == 'Orientation':
-                    break
-            exif = dict(image._getexif().items())
-
-            if exif[orientation] == 3:
-                image = image.rotate(180, expand=True)
-            elif exif[orientation] == 6:
-                image = image.rotate(270, expand=True)
-            elif exif[orientation] == 8:
-                image = image.rotate(90, expand=True)
-
-            image.save(image_directory.joinpath(img_name))
-        except (AttributeError, KeyError, IndexError):
-            # cases: image don't have getexif
-            pass
-
-        w, h = image.size
-        image.close()
-
-        return w, h
-
-    # Read Annotations
-    raw = pd.read_csv(annotation_file)
-    annos = raw
-    # annos = raw[~pd.isna(raw['anno.anno_task_id'])]   # Remove instances with no annotations
-
-    # Filename
-    annos['filename'] = annos['img.img_path'].apply(lambda x: Path(x).name)
-
-    # Image Size
-    annos['width'], annos['height'] = list(zip(*annos['filename'].apply(get_img_size)))
-
-    # Class
-    label_lists = annos['anno.lbl.name'].apply(lambda x: ast.literal_eval(x))
-    label_lists.apply(lambda x: x[0] if len(x)>0 else None)
-    annos['class'] = label_lists.apply(lambda x: x[0] if len(x)>0 else None)
-
-    # Bounding Box Coordinates
-    coord_list = [get_bbox_coords(d, w, h) for d, w, h in zip(annos['anno.data'], annos['width'], annos['height'])]
-    annos['xmin'], annos['ymin'], annos['xmax'], annos['ymax'] = list(zip(*coord_list))
-
-    nicely_named = annos[['filename', 'width', 'height', 'class', 'xmin', 'ymin', 'xmax', 'ymax']]
-
-    return nicely_named
 
 
 def draw_mask(draw, mask_file):
