@@ -6,6 +6,7 @@ import pandas as pd
 from PIL import ImageDraw, ImageFont, Image, ExifTags, __version__ as PILLOW_VERSION
 from pathlib import Path
 from shapely.geometry import box
+from shapely.affinity import translate
 import argparse
 import json
 import ast
@@ -218,6 +219,17 @@ def main(rescale_factor=4):
    
     font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
     
+    if detections_file is not None and individual_class is not None: #  explicitly check for None as it is possible individual_class=0,
+        print(" Drawing Boxes on individual cropped images and saving results")
+        individ_detec = out_file.with_name(out_file.stem) / 'detection_tiles'
+        individ_detec.mkdir(parents=True, exist_ok=True)
+        individ_detec_folder_name = "/".join(individ_detec.parts[-3:]) + "/*"
+        print(f" Individual detections being saved to... {individ_detec_folder_name}")
+
+        draw_detections_individual(individual_class, im, box_geoms, box_labels, font, individ_detec)
+    else:
+        print("Skipping Drawing Boxes")
+    
     print("Drawing Boxes on full pano")
     if detections_file is not None and full_pano:
         for b, detect in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
@@ -248,6 +260,55 @@ def main(rescale_factor=4):
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
     im.save(out_file)
+
+def draw_detections_individual(filter_class:int, im:Image, box_geoms, box_labels, font:ImageFont, output_folder:Path):    
+    """Draw individual detected objects
+
+    Args:
+        individuals (int): 
+        im (Image): Original image without any detections
+        box_geoms (list[shapeley.Geometry]): List of Geometries for detections
+        box_labels (list[tuple[int,str]]): List containing tuples of (id, category_label)
+        font (ImageFont): Font used for writing text in the image
+        output_folder (pathlib.Path): Output folder containing individual detections and detection_id
+    """
+
+    for b, detect in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
+        idx, lbl = detect
+        
+        if filter_class >= 0 and lbl != filter_class: # filter when a class is 0 or above, a negative choice does not filter
+            # skip
+            continue 
+        
+        if lbl == 0:
+            color = '#90EE90' # Pastel Green
+        elif lbl == 1:
+            color = '#fc8d59' # Tan Hide
+                    
+        crop_window = b.buffer(size_options.buffer_pixels).bounds
+        # crop_window = list(zip(*crop_window.exterior.xy)) # (x0, y0, x1, y1)
+        
+        # print("Cropping")
+        im_window = im.crop(crop_window)
+        crop_draw = ImageDraw.Draw(im_window)
+
+        # Draw the detection box in the cropped image
+        x0, y0, _, _ = b.bounds # offset from origin
+        det_box = translate(b, xoff = -x0, yoff = -y0) # translate to origin
+        det_box = translate(det_box, xoff = size_options.buffer_pixels, yoff = size_options.buffer_pixels) # translate buffer pixels
+        coords = list(zip(*det_box.exterior.xy)) # (x0, y0, x1, y1)
+        draw_box(crop_draw, color, coords)  
+
+        # Write the detection id in the detection box
+        horizontal_alignment = size_options.text_alignment
+        text_str = f"detection_id: {idx:.0f}"
+        draw_text(crop_draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
+        
+        # Save results
+        crop_file = (output_folder / f"{idx}")  # write to a same-named folder, files are named by their detection_id
+        crop_file = crop_file.with_suffix(img_file.suffix) # same format as the input file
+        # print("Saving crop file")
+        im_window.save(crop_file)
 
 
 def draw_text(draw:ImageDraw, coords:List[Tuple], text_str:str, align:str, font:ImageFont, outline=True):
@@ -310,6 +371,9 @@ if __name__ == '__main__':
     parser.add_argument('--ground_truth_file', type=str, required=False, help='File path to ground truth annotations.')
     parser.add_argument('--tile_directory', type=str, required=False, help='Path to the tile_directory containing the tiles corresponding to the ground truth annotations.')
 
+    parser.add_argument('--individual_class', type=int, required=False, help='Create individual detections for the chosen label. A negative class indicates draw individual detections for all classes.')
+    parser.add_argument('--full', type=bool, default=True, required=False, action=argparse.BooleanOptionalAction, help='Draw the full pano (--full) or skip it (--no-full). Default is to draw.')
+
     parser.add_argument('--out_file', type=str, help='File path to img_file with boxes drawn from model predictions.')
     args = parser.parse_args()
 
@@ -333,12 +397,16 @@ if __name__ == '__main__':
         print(f"ground_truth_file={ground_truth_file}, tile_directory={tile_directory}: {str(err)}")
         print("skipping drawing ground truth annotations")
     
+    individual_class = args.individual_class
+    full_pano = args.full
+
     out_file = Path(args.out_file) / img_file.name
     
     print("DEBUG:")
     print(f"  img_file={img_file}", f"detections_file={detections_file}", f"mask_file={mask_file}", sep="\n  ", end='\n\n')
     print(f"  threshold_dict={threshold_dict}", f"tile_size={tile_size}", f"anno_tile_size={anno_tile_size}", f"rescale_factor={rescale_factor}", sep="\n  ", end='\n\n')
     print(f"  ground_truth_file={ground_truth_file}", f"tile_directory={tile_directory}", sep="\n  ", end='\n\n')
+    print(f"  full_pano={full_pano}, individual_class={individual_class}", sep="\n  ", end='\n\n')
     print(f"  out_file={out_file}", sep="\n  ", end='\n\n')
 
     main()
