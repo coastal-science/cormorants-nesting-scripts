@@ -319,7 +319,7 @@ def draw_detections_individual(filter_class:int, im:Image, box_geoms, box_labels
         
         # Save results
         crop_file = (output_folder / f"{idx}")  # write to a same-named folder, files are named by their detection_id
-        crop_file = crop_file.with_suffix(img_file.suffix) # same format as the input file
+        crop_file = crop_file.with_suffix(out_file.suffix) # same format as other output image files
         # print("Saving crop file")
         im_window.save(crop_file)
         
