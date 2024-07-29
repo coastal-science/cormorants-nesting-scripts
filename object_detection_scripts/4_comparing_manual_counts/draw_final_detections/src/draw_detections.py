@@ -214,6 +214,8 @@ def main(rescale_factor=4):
     print("Draw Mask")
     if mask_file and mask_file.is_file() and mask_file.exists(): 
         draw = draw_mask(draw, mask_file)
+    else:
+        print("  Skipping Drawing Mask, --mask_file is missing or does not exist")
 
     print("Drawing Boxes")
    
@@ -224,11 +226,11 @@ def main(rescale_factor=4):
         individ_detec = out_file.with_name(out_file.stem) / 'detection_tiles'
         individ_detec.mkdir(parents=True, exist_ok=True)
         individ_detec_folder_name = "/".join(individ_detec.parts[-3:]) + "/*"
-        print(f" Individual detections being saved to... {individ_detec_folder_name}")
+        print(f" Individual detection images being saved to... {individ_detec_folder_name}")
 
         draw_detections_individual(individual_class, im, box_geoms, box_labels, font, individ_detec)
     else:
-        print("  Skipping Drawing Boxes")
+        print("  Skipping Drawing Boxes, --detections_file is missing or --individual_class is not selected")
     
     print("Drawing Boxes on full pano")
     if detections_file is not None and full_pano:
@@ -247,7 +249,7 @@ def main(rescale_factor=4):
 
             draw_text(draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
     else:
-        print("  Skipping Drawing Boxes on full pano")
+        print("  Skipping Drawing Boxes on full pano, --detections_file is missing or --no-full is selected")
 
 
     print("Draw Ground truth Annotations")
@@ -255,7 +257,7 @@ def main(rescale_factor=4):
         draw = draw_ground_truth_annotations(draw, ground_truth_file, tile_directory,
                                              anno_tile_size = anno_tile_size, rescale_factor=(width_scale, height_scale))
     else:
-        print("  Skipping Ground truth Annotations")
+        print("  Skipping Ground truth Annotations, --ground_truth_file or --tile_directory is missing")
 
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
