@@ -228,7 +228,8 @@ def main(rescale_factor=4):
         individ_detec_folder_name = "/".join(individ_detec.parts[-3:]) + "/*"
         print(f" Individual detection images being saved to... {individ_detec_folder_name}")
 
-        draw_detections_individual(individual_class, im, box_geoms, box_labels, font, individ_detec)
+        crop_file_name = draw_detections_individual(individual_class, im, box_geoms, box_labels, font, individ_detec)
+        detections['indv_name'] = detections['index'].map(crop_file_name)
     else:
         print("  Skipping Drawing Boxes, --detections_file is missing or --individual_class is not selected")
     
@@ -278,7 +279,8 @@ def draw_detections_individual(filter_class:int, im:Image, box_geoms, box_labels
         font (ImageFont): Font used for writing text in the image
         output_folder (pathlib.Path): Output folder containing individual detections and detection_id
     """
-
+    
+    result = {}
     for b, detect in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
         idx, lbl = detect
         
@@ -315,6 +317,9 @@ def draw_detections_individual(filter_class:int, im:Image, box_geoms, box_labels
         crop_file = crop_file.with_suffix(img_file.suffix) # same format as the input file
         # print("Saving crop file")
         im_window.save(crop_file)
+        
+        result[idx] = (crop_file)
+    return result
 
 
 def draw_text(draw:ImageDraw, coords:List[Tuple], text_str:str, align:str, font:ImageFont, outline=True):
