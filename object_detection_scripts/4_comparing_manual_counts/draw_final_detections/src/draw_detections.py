@@ -427,4 +427,4 @@ if __name__ == '__main__':
     print(f"  full_pano={full_pano}, individual_class={individual_class}", sep="\n  ", end='\n\n')
     print(f"  out_file={out_file}", sep="\n  ", end='\n\n')
 
-    main()
+    main(rescale_factor)
