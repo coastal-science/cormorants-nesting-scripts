@@ -182,6 +182,7 @@ def main(rescale_factor=4):
     print("Reducing Image")
     im = im.reduce(factor=rescale_factor)
     width_reduced, height_reduced = im.size
+    im.convert('RGB')
     
     width_scale = width_actual / width_reduced
     height_scale = height_actual / height_reduced
@@ -411,7 +412,7 @@ if __name__ == '__main__':
     individual_class = args.individual_class
     full_pano = args.full
 
-    out_file = Path(args.out_file) / img_file.name
+    out_file = (Path(args.out_file) / img_file.name).with_suffix('.png')
     
     print()
     print("DEBUG:")
