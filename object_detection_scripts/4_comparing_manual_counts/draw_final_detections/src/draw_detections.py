@@ -268,6 +268,10 @@ def main(rescale_factor=4):
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
     im.save(out_file)
+    
+    csv_file = out_file.with_suffix(".csv")
+    detections.to_csv(csv_file , index=False)
+    print(f"The new pano is saved to {out_file} and individual detections are saved to: {csv_file}")
 
 def draw_detections_individual(filter_class:int, im:Image, box_geoms, box_labels, font:ImageFont, output_folder:Path):    
     """Draw individual detected objects
