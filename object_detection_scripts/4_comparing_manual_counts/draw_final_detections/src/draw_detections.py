@@ -393,11 +393,11 @@ if __name__ == '__main__':
 
     parser.add_argument('--individual_class', type=int, required=False, help='Create individual detections for the chosen label. A negative class indicates draw individual detections for all classes.')
     parser.add_argument('--full', type=bool, default=True, required=False, 
-                        action= "store_true" if PYTHON_VERSION < (3,9) else argparse.BooleanOptionalAction, 
+                        action= 'store_true' if PYTHON_VERSION < (3,9) else argparse.BooleanOptionalAction, 
                         help='Draw the full pano (--full) or skip it (--no-full). Default is to draw.')
     parser.add_argument('--indv', type=bool, default=True, required=False, 
-                        action= "store_true" if PYTHON_VERSION < (3,9) else argparse.BooleanOptionalAction, 
-                        help='Draw the full pano (--full) or skip it (--no-indv). Default is to draw.')
+                        action= 'store_true' if PYTHON_VERSION < (3,9) else argparse.BooleanOptionalAction, 
+                        help='Draw the full pano (--indv) or skip it (--no-indv). Default is to draw.')
 
     parser.add_argument('--out_file', type=str, help='File path to img_file with boxes drawn from model predictions.')
     args = parser.parse_args()
