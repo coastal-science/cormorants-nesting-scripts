@@ -11,6 +11,7 @@ import argparse
 import json
 import ast
 import tqdm
+import sys
 import numpy as np
 from functools import reduce
 from dataclasses import dataclass
@@ -18,6 +19,7 @@ from typing import List, Tuple
 
 convert_version = lambda x : tuple(map(int, x.split(".")))
 PILLOW_VERSION = convert_version(PILLOW_VERSION)
+PYTHON_VERSION = tuple(map(int, sys.version.split()[0].split(".")))
 Image.MAX_IMAGE_PIXELS = 3000000000
 
 @dataclass
@@ -390,8 +392,12 @@ if __name__ == '__main__':
     parser.add_argument('--tile_directory', type=str, required=False, help='Path to the tile_directory containing the tiles corresponding to the ground truth annotations.')
 
     parser.add_argument('--individual_class', type=int, required=False, help='Create individual detections for the chosen label. A negative class indicates draw individual detections for all classes.')
-    parser.add_argument('--full', type=bool, default=True, required=False, action=argparse.BooleanOptionalAction, help='Draw the full pano (--full) or skip it (--no-full). Default is to draw.')
-    parser.add_argument('--indv', type=bool, default=True, required=False, action=argparse.BooleanOptionalAction, help='Draw the full pano (--full) or skip it (--no-indv). Default is to draw.')
+    parser.add_argument('--full', type=bool, default=True, required=False, 
+                        action= "store_true" if PYTHON_VERSION < (3,9) else argparse.BooleanOptionalAction, 
+                        help='Draw the full pano (--full) or skip it (--no-full). Default is to draw.')
+    parser.add_argument('--indv', type=bool, default=True, required=False, 
+                        action= "store_true" if PYTHON_VERSION < (3,9) else argparse.BooleanOptionalAction, 
+                        help='Draw the full pano (--full) or skip it (--no-indv). Default is to draw.')
 
     parser.add_argument('--out_file', type=str, help='File path to img_file with boxes drawn from model predictions.')
     args = parser.parse_args()
