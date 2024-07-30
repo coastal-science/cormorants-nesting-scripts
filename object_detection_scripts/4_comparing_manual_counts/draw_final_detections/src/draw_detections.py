@@ -91,10 +91,19 @@ def get_bbox_coords(raw_anno, w, h):
     return xmin, ymin, xmax, ymax
 
 
-def draw_mask(draw, mask_file):
-    df = pd.read_csv(mask_file)
+def draw_mask(draw, mask_file, tile_width, tile_height, original_pano):
+    # df = pd.read_csv(mask_file)
+    mask_name = Path(original_pano).stem
     im_w, im_h = draw.im.size
-    mask_points = [(im_w*d['x'], im_h*d['y']) for d in ast.literal_eval(df['anno.data'].iloc[0])]
+    resize_dims = (im_w/tile_width, im_h/tile_height)
+    mask_points = load_mask(mask_file, resize_dims, mask_name=Path(original_pano).stem)
+
+    if mask_points is None:
+        print(f"  Skipping Drawing Mask, mask_name{mask_name} is not found in the --mask_file")
+        return
+    
+    mask_points = list(zip(*mask_points.exterior.xy))
+
     draw.polygon(mask_points, outline='orange', width=size_options.large) #350 for super large
     return draw
 
