@@ -250,7 +250,7 @@ def draw_text(draw:ImageDraw, coords:List[Tuple], text_str:str, align:str, font:
                             text_str,
                             font=font,
                             align=align,
-                            anchor='la',
+                            # anchor='la', # Only supported for TrueType fonts
                             # font_size=32,  # Added in version 10.1.0.
                             )
     
@@ -397,10 +397,13 @@ if __name__ == '__main__':
                             default=True, required=False, 
                             action= 'store_true', 
                             help='Draw the full pano (--full) or skip it (--no-full). Default is to draw.')
+        parser.add_argument('--no-full', dest='full', action='store_false')
         parser.add_argument('--indv', 
                             default=True, required=False, 
                             action= 'store_true', 
                             help='Draw the full pano (--indv) or skip it (--no-indv). Default is to draw.')
+        parser.add_argument('--no-indv', dest='indv', action='store_false')
+
 
     else:
         parser.add_argument('--full', 
