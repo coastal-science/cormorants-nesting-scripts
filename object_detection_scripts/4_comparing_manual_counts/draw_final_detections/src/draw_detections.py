@@ -112,6 +112,8 @@ def load_mask(f, resize_dims, mask_name=None):
             mask_points = [(d['x'], d['y']) for d in ast.literal_eval(matching_masks['anno.data'].iloc[0])]
             resized_points = [(x * resize_dims[0], y * resize_dims[1]) for x, y in mask_points]
             mask_geom = Polygon(resized_points)
+        else:
+            return None
 
     return mask_geom
 
