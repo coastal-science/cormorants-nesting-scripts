@@ -341,7 +341,7 @@ def main(rescale_factor=4):
 
     print("Draw Mask")
     if mask_file and mask_file.is_file() and mask_file.exists(): 
-        draw = draw_mask(draw, mask_file)
+        draw = draw_mask(draw, mask_file, tile_width=1, tile_height=1, original_pano=img_file) # no need to scale tile dimensions as the draw object is already scaled and masks are % coordinates
     else:
         print("  Skipping Drawing Mask, --mask_file is not selected or missing")
 
