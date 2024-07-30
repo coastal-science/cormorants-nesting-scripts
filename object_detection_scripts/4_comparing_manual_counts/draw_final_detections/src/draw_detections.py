@@ -104,7 +104,8 @@ def draw_mask(draw, mask_file, tile_width, tile_height, original_pano):
     
     mask_points = list(zip(*mask_points.exterior.xy))
 
-    draw.polygon(mask_points, outline='orange', width=size_options.large) #350 for super large
+    # draw.polygon(mask_points, outline='orange', width=size_options.large) #350 for super large
+    draw_box(draw, color='orange', coords=mask_points, width=size_options.large) #350 for super large
     return draw
 
 def load_mask(f, resize_dims, mask_name=None):
