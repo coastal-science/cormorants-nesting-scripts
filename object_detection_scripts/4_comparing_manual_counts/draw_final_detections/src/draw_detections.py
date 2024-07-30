@@ -335,7 +335,7 @@ def main(rescale_factor=4):
     if detections_file is not None and full_pano:
         for b, detect in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
             idx, lbl = detect
-            if individual_class >= 0 and lbl != individual_class: # filter when a class is 0 or above, a negative choice does not filter
+            if individual_class and individual_class >= 0 and lbl != individual_class: # filter when a class is 0 or above, a negative choice does not filter
                 # skip
                 continue 
 
