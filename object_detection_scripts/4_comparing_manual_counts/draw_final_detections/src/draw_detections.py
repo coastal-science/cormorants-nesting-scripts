@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from PIL import ImageDraw, ImageFont, Image, ExifTags, __version__ as PILLOW_VERSION
 from pathlib import Path
-from shapely.geometry import box
+from shapely.geometry import box, Polygon
 from shapely.affinity import translate
 import argparse
 import json
@@ -97,6 +97,23 @@ def draw_mask(draw, mask_file):
     mask_points = [(im_w*d['x'], im_h*d['y']) for d in ast.literal_eval(df['anno.data'].iloc[0])]
     draw.polygon(mask_points, outline='orange', width=size_options.large) #350 for super large
     return draw
+
+def load_mask(f, resize_dims, mask_name=None):
+    df = pd.read_csv(f)
+    if len(df) == 1:
+        print(f"Loading mask for {df['img.img_path'].iloc[0]}")
+        mask_points = [(d['x'], d['y']) for d in ast.literal_eval(df['anno.data'].iloc[0])]
+        resized_points = [(x*resize_dims[0], y*resize_dims[1]) for x, y in mask_points]
+        mask_geom = Polygon(resized_points)
+    elif mask_name:
+        matching_masks = df[df['img.img_path'].str.contains(mask_name)]
+        if len(matching_masks) == 1:
+            print(f"Loading mask for {matching_masks['img.img_path'].iloc[0]}")
+            mask_points = [(d['x'], d['y']) for d in ast.literal_eval(matching_masks['anno.data'].iloc[0])]
+            resized_points = [(x * resize_dims[0], y * resize_dims[1]) for x, y in mask_points]
+            mask_geom = Polygon(resized_points)
+
+    return mask_geom
 
 
 def draw_tiles(draw, tile_width, tile_height):
