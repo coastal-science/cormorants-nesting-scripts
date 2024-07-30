@@ -313,7 +313,7 @@ def main(rescale_factor=4):
     if mask_file and mask_file.is_file() and mask_file.exists(): 
         draw = draw_mask(draw, mask_file)
     else:
-        print("  Skipping Drawing Mask, --mask_file is missing or does not exist")
+        print("  Skipping Drawing Mask, --mask_file is not selected or missing")
 
     print("Drawing Boxes")
    
@@ -335,7 +335,7 @@ def main(rescale_factor=4):
     if detections_file is not None and full_pano:
         for b, detect in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
             idx, lbl = detect
-            if individual_class and individual_class >= 0 and lbl != individual_class: # filter when a class is 0 or above, a negative choice does not filter
+            if individual_class >= 0 and lbl != individual_class: # filter when a class is 0 or above, a negative choice does not filter
                 # skip
                 continue 
 
