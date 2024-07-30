@@ -319,7 +319,7 @@ def main(rescale_factor=4):
    
     font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
     
-    if detections_file is not None and individual_class is not None: #  explicitly check for None as it is possible individual_class=0,
+    if detections_file is not None and individual_class is not None and indv_pano: #  explicitly check for None as it is possible individual_class=0,
         print(" Drawing Boxes on individual cropped images and saving results")
         individ_detec = out_file.with_name(out_file.stem) / 'detection_tiles'
         individ_detec.mkdir(parents=True, exist_ok=True)
@@ -335,7 +335,7 @@ def main(rescale_factor=4):
     if detections_file is not None and full_pano:
         for b, detect in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
             idx, lbl = detect
-            if individual_class >= 0 and lbl != individual_class: # filter when a class is 0 or above, a negative choice does not filter
+            if individual_class and individual_class >= 0 and lbl != individual_class: # filter when a class is 0 or above, a negative choice does not filter
                 # skip
                 continue 
 
@@ -391,6 +391,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--individual_class', type=int, required=False, help='Create individual detections for the chosen label. A negative class indicates draw individual detections for all classes.')
     parser.add_argument('--full', type=bool, default=True, required=False, action=argparse.BooleanOptionalAction, help='Draw the full pano (--full) or skip it (--no-full). Default is to draw.')
+    parser.add_argument('--indv', type=bool, default=True, required=False, action=argparse.BooleanOptionalAction, help='Draw the full pano (--full) or skip it (--no-indv). Default is to draw.')
 
     parser.add_argument('--out_file', type=str, help='File path to img_file with boxes drawn from model predictions.')
     args = parser.parse_args()
@@ -417,6 +418,7 @@ if __name__ == '__main__':
     
     individual_class = args.individual_class
     full_pano = args.full
+    indv_pano = args.indv
 
     out_file = (Path(args.out_file) / img_file.name).with_suffix('.png')
     
@@ -426,7 +428,7 @@ if __name__ == '__main__':
     print(f"  img_file={img_file}", f"detections_file={detections_file}", f"mask_file={mask_file}", sep="\n  ", end='\n\n')
     print(f"  threshold_dict={threshold_dict}", f"tile_size={tile_size}", f"anno_tile_size={anno_tile_size}", f"rescale_factor={rescale_factor}", sep="\n  ", end='\n\n')
     print(f"  ground_truth_file={ground_truth_file}", f"tile_directory={tile_directory}", sep="\n  ", end='\n\n')
-    print(f"  full_pano={full_pano}, individual_class={individual_class}", sep="\n  ", end='\n\n')
+    print(f"  full_pano={full_pano}, indv_pano={indv_pano}, individual_class={individual_class}", sep="\n  ", end='\n\n')
     print(f"  out_file={out_file}", sep="\n  ", end='\n\n')
 
     main(rescale_factor)
