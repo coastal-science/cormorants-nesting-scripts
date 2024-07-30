@@ -392,12 +392,27 @@ if __name__ == '__main__':
     parser.add_argument('--tile_directory', type=str, required=False, help='Path to the tile_directory containing the tiles corresponding to the ground truth annotations.')
 
     parser.add_argument('--individual_class', type=int, required=False, help='Create individual detections for the chosen label. A negative class indicates draw individual detections for all classes.')
-    parser.add_argument('--full', type=bool, default=True, required=False, 
-                        action= 'store_true' if PYTHON_VERSION < (3,9) else argparse.BooleanOptionalAction, 
-                        help='Draw the full pano (--full) or skip it (--no-full). Default is to draw.')
-    parser.add_argument('--indv', type=bool, default=True, required=False, 
-                        action= 'store_true' if PYTHON_VERSION < (3,9) else argparse.BooleanOptionalAction, 
-                        help='Draw the full pano (--indv) or skip it (--no-indv). Default is to draw.')
+    if PYTHON_VERSION < (3,9):
+        parser.add_argument('--full', 
+                            default=True, required=False, 
+                            action= 'store_true', 
+                            help='Draw the full pano (--full) or skip it (--no-full). Default is to draw.')
+        parser.add_argument('--indv', 
+                            default=True, required=False, 
+                            action= 'store_true', 
+                            help='Draw the full pano (--indv) or skip it (--no-indv). Default is to draw.')
+
+    else:
+        parser.add_argument('--full', 
+                            type=bool, 
+                            default=True, required=False, 
+                            action=argparse.BooleanOptionalAction, 
+                            help='Draw the full pano (--full) or skip it (--no-full). Default is to draw.')
+        parser.add_argument('--indv', 
+                            type=bool, 
+                            default=True, required=False, 
+                            action=argparse.BooleanOptionalAction, 
+                            help='Draw the full pano (--indv) or skip it (--no-indv). Default is to draw.')
 
     parser.add_argument('--out_file', type=str, help='File path to img_file with boxes drawn from model predictions.')
     args = parser.parse_args()
