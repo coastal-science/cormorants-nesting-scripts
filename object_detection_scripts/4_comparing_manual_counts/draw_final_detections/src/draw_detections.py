@@ -258,11 +258,11 @@ def draw_text(draw:ImageDraw, coords:List[Tuple], text_str:str, align:str, font:
         draw.rectangle(text_box, outline='red', width=size_options.medium)
     draw.text((text_box[0], text_box[1]), text_str, fill='red', font=font, anchor='la') # left ascender corner of text box
 
-def draw_box(draw:ImageDraw, color, coords):
+def draw_box(draw:ImageDraw, color, coords, width=size_options.medium):
     if PILLOW_VERSION >= convert_version('9.0'):
-        draw.polygon(coords, outline=color, width=size_options.medium)
+        draw.polygon(coords, outline=color, width=width)
     else:
-        draw.line(coords, fill=color, width=size_options.medium)
+        draw.line(coords, fill=color, width=width)
 
 
 def main(rescale_factor=4):
