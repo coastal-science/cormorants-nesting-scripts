@@ -344,7 +344,7 @@ def main(rescale_factor=4):
     if mask_file and mask_file.is_file() and mask_file.exists(): 
         draw = draw_mask(draw, mask_file, tile_width=1, tile_height=1, original_pano=img_file) # no need to scale tile dimensions as the draw object is already scaled and masks are % coordinates
     else:
-        print("  Skipping Drawing Mask, --mask_file is not selected or missing")
+        print(" Skipping Drawing Mask, --mask_file is not selected or missing")
 
     print("Drawing Boxes")
    
@@ -360,7 +360,7 @@ def main(rescale_factor=4):
         crop_file_name = draw_detections_individual(individual_class, im, box_geoms, box_labels, font, individ_detec)
         detections['indv_name'] = detections['index'].map(crop_file_name)
     else:
-        print("  Skipping Drawing Boxes, --detections_file is missing or --individual_class is not selected")
+        print(" Skipping Drawing Boxes, --detections_file is missing or --individual_class is not selected")
     
     print("Drawing Boxes on full pano")
     if detections_file is not None and full_pano:
@@ -383,7 +383,7 @@ def main(rescale_factor=4):
 
             draw_text(draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
     else:
-        print("  Skipping Drawing Boxes on full pano, --detections_file is missing or --no-full is selected")
+        print(" Skipping Drawing Boxes on full pano, --detections_file is missing or --no-full is selected")
 
 
     print("Draw Ground truth Annotations")
@@ -391,7 +391,7 @@ def main(rescale_factor=4):
         draw = draw_ground_truth_annotations(draw, ground_truth_file, tile_directory,
                                              anno_tile_size = anno_tile_size, rescale_factor=(width_scale, height_scale))
     else:
-        print("  Skipping Ground truth Annotations, --ground_truth_file or --tile_directory is missing")
+        print(" Skipping Ground truth Annotations, --ground_truth_file or --tile_directory is missing")
 
     print("Saving Result")
     Path(out_file).parent.mkdir(parents=True, exist_ok=True)
