@@ -450,7 +450,8 @@ def main(rescale_factor=4):
     
     csv_file = out_file.with_suffix(".csv")
     detections.to_csv(csv_file , index=False)
-    print(f"The new pano is saved to {out_file} and individual detections are saved to: {csv_file}")
+    print(f"The new pano is saved to: {out_file}")
+    print(f"Individual detections are saved to: {csv_file}")
 
 
 
