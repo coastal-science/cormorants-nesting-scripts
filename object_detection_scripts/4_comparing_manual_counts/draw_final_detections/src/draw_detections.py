@@ -483,12 +483,6 @@ if __name__ == '__main__':
 
     ground_truth_file = args.ground_truth_file
     tile_directory = args.tile_directory
-    try:
-        ground_truth_file = Path(args.ground_truth_file) # if args.ground_truth_file else args.ground_truth_file
-        tile_directory = Path(args.tile_directory) # if args.tile_directory else args.tile_directory
-    except TypeError as err: #expected str, bytes or os.PathLike object, not NoneType
-        print(f"ground_truth_file={ground_truth_file}, tile_directory={tile_directory}: {str(err)}")
-        print("skipping drawing ground truth annotations")
     
     individual_class = args.individual_class
     full_pano = args.full
