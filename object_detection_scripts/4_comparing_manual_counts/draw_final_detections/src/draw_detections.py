@@ -340,7 +340,7 @@ def get_font() -> ImageFont:
         print(test_font())
     except Exception as err:
         print(
-            f"Could not load default system font, trying Linux specific. {str(err)}", end=' ')
+            f"Could not load default system font, trying Linux specific. err={str(err)}.", end=' ')
         font = None
         try:
             if platform.system() == 'Linux':
@@ -348,7 +348,7 @@ def get_font() -> ImageFont:
                 font = ImageFont.truetype(fontfile, 12)
                 print(test_font())
         except Exception as err:
-            print(f"Could not load a Linux system font {fontfile}: {str(err)}")
+            print(f"Could not load a Linux system font {fontfile}. err={str(err)}.")
     finally:
         fontfile = Path(__file__).parent / 'Aileron-Regular.otf'
 
@@ -361,7 +361,7 @@ def get_font() -> ImageFont:
                 print(test_font())
             except Exception as err:
                 print(
-                    f"Could not load any font. Loading or using failed. Something is wrong: {str(err)}")
+                    f"Could not load any font. Loading or using failed. Something is wrong. err={str(err)}.")
 
     return font
 
