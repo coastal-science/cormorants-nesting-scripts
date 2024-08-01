@@ -11,7 +11,7 @@ import argparse
 import json
 import ast
 import tqdm
-import sys
+import sys, platform
 import numpy as np
 from functools import reduce
 from dataclasses import dataclass
@@ -153,7 +153,8 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, anno_
     rescale_factor_x, rescale_factor_y = validate_scale(rescale_factor)
 
     annotations = pd.read_csv(ground_truth_file).dropna(subset=['anno.data'])
-    font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
+    # font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
+    font = get_font()
     color = color_palette.get('ground')
     text_color = color_palette.get('ground_text')
     count = 0
@@ -303,6 +304,33 @@ def draw_box(draw:ImageDraw, color, coords, width=size_options.medium):
     else:
         draw.line(coords, fill=color, width=width)
 
+def get_font() -> ImageFont:
+    """Load and return a TrueType font. Check for builtin fonts, a Linux Dejavu font or a font packaged in the repo
+
+    Returns:
+        ImageFont: A truetype font.
+    """
+
+    font = None
+    try:
+        font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
+    except Exception as err:
+        print(f"Could not load default system font, trying Linux specific. {str(err)}")
+        try:
+            if platform.system() == 'Linux':
+                fontfile = 'fonts/dejavu-sans-fonts/DejaVuSans.ttf'
+                font = ImageFont.load(fontfile, 12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load(fontfile)
+        except Exception as err:
+            print(f"Could not load a Linux system font {fontfile}: {str(err)}")
+    finally:
+        fontfile = Path(__file__).parent / 'Aileron-Regular.otf'
+        # breakpoint()
+        if not font: #or (font and not isinstance(font, ImageFont.truetype)):
+            # if font was never assigned or it was not assigned as a truetype
+            print(f"Could not any system fonts. Loading the font packaged in the repo: {fontfile}")
+            font = ImageFont.load(fontfile, 12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load(fontfile)
+
+    return font
 
 def main(rescale_factor=4):
     if detections_file is not None:
@@ -358,7 +386,8 @@ def main(rescale_factor=4):
 
     print("Drawing Boxes")
    
-    font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
+    # font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
+    font = get_font()
     
     if detections_file is not None and individual_class is not None and indv_pano: #  explicitly check for None as it is possible individual_class=0,
         print(" Drawing Boxes on individual cropped images and saving results")
