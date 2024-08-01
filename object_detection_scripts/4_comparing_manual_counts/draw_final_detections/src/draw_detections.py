@@ -22,6 +22,13 @@ PILLOW_VERSION = convert_version(PILLOW_VERSION)
 PYTHON_VERSION = tuple(map(int, sys.version.split()[0].split(".")))
 Image.MAX_IMAGE_PIXELS = 3000000000
 
+color_palette={
+    0: '#90EE90', # Pastel Green
+    1: '#fc8d59',  # Tan Hide
+    'ground': 'gold',
+    'ground_text': 'DeepPink',
+    'text_color': '#ff0000', # red (#ff0000)
+}
 @dataclass
 class Sizes:
     """Class to parametrize drawing options (brush stroke) dependent on size of panorama image 
@@ -147,6 +154,8 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, anno_
 
     annotations = pd.read_csv(ground_truth_file).dropna(subset=['anno.data'])
     font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
+    color = color_palette.get('ground')
+    text_color = color_palette.get('ground_text')
     count = 0
     for i, anno, i_file in zip(annotations['anno.idx'], annotations['anno.data'], annotations['img.img_path']):
         tile_name = Path(i_file).name
@@ -158,8 +167,8 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, anno_
         y0 = (tile_y0 + (int(tile_y)*anno_tile_size)) / rescale_factor_y
         x1 = (tile_x1 + (int(tile_x)*anno_tile_size)) / rescale_factor_x
         y1 = (tile_y1 + (int(tile_y)*anno_tile_size)) / rescale_factor_y
-        draw.rectangle([x0, y0, x1, y1], outline='gold', width=size_options.medium)
-        draw.text((np.mean([x0, x1]), np.mean([y0, y1])), str(int(i)), fill='DeepPink', font=font, anchor='mm')
+        draw.rectangle([x0, y0, x1, y1], outline=color, width=size_options.medium)
+        draw.text((np.mean([x0, x1]), np.mean([y0, y1])), str(int(i)), fill=text_color, font=font, anchor='mm')
 
     return draw
 
@@ -217,11 +226,8 @@ def draw_detections_individual(filter_class:int, im:Image, box_geoms, box_labels
             # skip
             continue 
         
-        if lbl == 0:
-            color = '#90EE90' # Pastel Green
-        elif lbl == 1:
-            color = '#fc8d59' # Tan Hide
-                    
+        color = color_palette.get(lbl)
+
         crop_window = b.buffer(size_options.buffer_pixels).bounds
         # crop_window = list(zip(*crop_window.exterior.xy)) # (x0, y0, x1, y1)
         
@@ -234,7 +240,7 @@ def draw_detections_individual(filter_class:int, im:Image, box_geoms, box_labels
         det_box = translate(b, xoff = -x0, yoff = -y0) # translate to origin
         det_box = translate(det_box, xoff = size_options.buffer_pixels, yoff = size_options.buffer_pixels) # translate buffer pixels
         coords = list(zip(*det_box.exterior.xy)) # (x0, y0, x1, y1)
-        draw_box(crop_draw, color, coords)  
+        draw_box(crop_draw, color, coords, width=size_options.small)  
 
         # Write the detection id in the detection box
         horizontal_alignment = size_options.text_alignment
@@ -282,10 +288,10 @@ def draw_text(draw:ImageDraw, coords:List[Tuple], text_str:str, align:str, font:
                             # anchor='la', # Only supported for TrueType fonts
                             # font_size=32,  # Added in version 10.1.0.
                             )
-    
+    text_color = color_palette.get('text_color')
     if outline:
-        draw.rectangle(text_box, outline='red', width=size_options.medium)
-    draw.text((text_box[0], text_box[1]), text_str, fill='red', font=font, anchor='la') # left ascender corner of text box
+        draw.rectangle(text_box, outline=text_color, width=size_options.medium)
+    draw.text((text_box[0], text_box[1]), text_str, fill=text_color, font=font, anchor='') # left ascender corner of text box
 
 def draw_box(draw:ImageDraw, color, coords, width=size_options.medium):
     if PILLOW_VERSION >= convert_version('9.0'):
@@ -370,10 +376,7 @@ def main(rescale_factor=4):
                 # skip
                 continue 
 
-            if lbl == 0:
-                color = '#90EE90' # Pastel Green
-            elif lbl == 1:
-                color = '#fc8d59' # Tan Hide
+            color = color_palette.get(lbl)
                 
             coords = list(zip(*b.exterior.xy))
             draw_box(draw, color, coords)  
