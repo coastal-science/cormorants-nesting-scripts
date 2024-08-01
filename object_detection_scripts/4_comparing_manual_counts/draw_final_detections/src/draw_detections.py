@@ -23,11 +23,11 @@ PYTHON_VERSION = tuple(map(int, sys.version.split()[0].split(".")))
 Image.MAX_IMAGE_PIXELS = 3000000000
 
 color_palette={
-    0: '#90EE90', # Pastel Green
-    1: '#fc8d59',  # Tan Hide
+    0: '#90EE9080', # Pastel Green : 8 digit hex with 50% opacity (#80)
+    1: '#fc8d5980',  # Tan Hide 8 : digit hex with 50% opacity (#80)
     'ground': 'gold',
     'ground_text': 'DeepPink',
-    'text_color': '#ff0000', # red (#ff0000)
+    'text_color': '#ff000080', # red (#ff0000) + 50% opacity (#80)
 }
 @dataclass
 class Sizes:
@@ -231,27 +231,31 @@ def draw_detections_individual(filter_class:int, im:Image, box_geoms, box_labels
         crop_window = b.buffer(size_options.buffer_pixels).bounds
         # crop_window = list(zip(*crop_window.exterior.xy)) # (x0, y0, x1, y1)
         
-        # print("Cropping")
-        im_window = im.crop(crop_window)
-        crop_draw = ImageDraw.Draw(im_window)
+        assert im.mode == 'RGBA'
 
+        base = im.crop(crop_window)
+        canvas = Image.new("RGBA", size=base.size, color=(255, 255, 255, 0))
+        canvas_draw = ImageDraw.Draw(canvas)
+        
         # Draw the detection box in the cropped image
         x0, y0, _, _ = b.bounds # offset from origin
         det_box = translate(b, xoff = -x0, yoff = -y0) # translate to origin
         det_box = translate(det_box, xoff = size_options.buffer_pixels, yoff = size_options.buffer_pixels) # translate buffer pixels
         coords = list(zip(*det_box.exterior.xy)) # (x0, y0, x1, y1)
-        draw_box(crop_draw, color, coords, width=size_options.small)  
+        draw_box(canvas_draw, color, coords, width=size_options.small)  
 
         # Write the detection id in the detection box
         horizontal_alignment = size_options.text_alignment
         text_str = f"detection_id: {idx:.0f}"
-        draw_text(crop_draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
+        draw_text(canvas_draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
         
+        out = Image.alpha_composite(base, canvas)
+
         # Save results
         crop_file = (output_folder / f"{idx}")  # write to a same-named folder, files are named by their detection_id
         crop_file = crop_file.with_suffix(out_file.suffix) # same format as other output image files
         # print("Saving crop file")
-        im_window.save(crop_file)
+        out.save(crop_file)
         
         result[idx] = (crop_file)
     return result
@@ -316,7 +320,7 @@ def main(rescale_factor=4):
     print("Reducing Image")
     im = im.reduce(factor=rescale_factor)
     width_reduced, height_reduced = im.size
-    im.convert('RGB')
+    im = im.convert('RGBA')
     
     width_scale = width_actual / width_reduced
     height_scale = height_actual / height_reduced
@@ -370,6 +374,11 @@ def main(rescale_factor=4):
     
     print("Drawing Boxes on full pano")
     if detections_file is not None and full_pano:
+        assert im.mode == 'RGBA'
+        # base = im
+        canvas = Image.new("RGBA", size=im.size, color=(255, 255, 255, 0))
+        canvas_draw = ImageDraw.Draw(canvas)
+
         for b, detect in tqdm.tqdm(zip(box_geoms, box_labels), total=len(box_labels)):
             idx, lbl = detect
             if individual_class and individual_class >= 0 and lbl != individual_class: # filter when a class is 0 or above, a negative choice does not filter
@@ -379,19 +388,29 @@ def main(rescale_factor=4):
             color = color_palette.get(lbl)
                 
             coords = list(zip(*b.exterior.xy))
-            draw_box(draw, color, coords)  
+            draw_box(canvas_draw, color, coords, width=size_options.small)  
 
             horizontal_alignment = size_options.text_alignment
             text_str = f"detection_id: {idx:.0f}"
 
-            draw_text(draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
+            draw_text(canvas_draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
+            
+        im = Image.alpha_composite(im, canvas)
+        draw = ImageDraw.Draw(im) # restore Image and Draw objects
+
     else:
         print(" Skipping Drawing Boxes on full pano, --detections_file is missing or explicitly skipped with --no-full")
 
     print("Draw Ground truth Annotations")
     if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
-        draw = draw_ground_truth_annotations(draw, ground_truth_file, tile_directory,
+        # im = base 
+        canvas = Image.new("RGBA", size=im.size, color=(255, 255, 255, 0))
+        canvas_draw = ImageDraw.Draw(canvas)
+
+        canvas_draw = draw_ground_truth_annotations(canvas_draw, ground_truth_file, tile_directory,
                                              anno_tile_size = anno_tile_size, rescale_factor=(width_scale, height_scale))
+        im = Image.alpha_composite(im, canvas)
+        draw = ImageDraw.Draw(im) # restore Image and Draw objects
     else:
         print(" Skipping Ground truth Annotations, --ground_truth_file or --tile_directory is missing")
 
