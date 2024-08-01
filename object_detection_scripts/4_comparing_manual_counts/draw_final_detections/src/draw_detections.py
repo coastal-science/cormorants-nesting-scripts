@@ -314,22 +314,48 @@ def get_font() -> ImageFont:
 
     font = None
     try:
+        print(f"Loading Pillow default font.", end=' ')
         font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
+        def test_font():
+            """draw a character '@' (on a 10x10 image) using the font to confirm whether a suitable font loaded.
+            Returns
+                True or raises an Exception from PIL library.
+            """
+
+            text_str="@"
+            align= 'center' 
+            canvas = Image.new("RGBA", size=(10,10), color=(255, 255, 255, 0))
+            canvas_draw = ImageDraw.Draw(canvas)
+            text_box = canvas_draw.textbbox((2, 1), #  adjust the origin coordinate of the textbox, adjust by text_height if needed 
+                            text_str,
+                            font=font,
+                            align=align,
+                            anchor='la', # Only supported for TrueType fonts
+                            # font_size=32,  # Added in version 10.1.0.
+                            )
+            return True
+        print(test_font())
     except Exception as err:
-        print(f"Could not load default system font, trying Linux specific. {str(err)}")
+        print(f"Could not load default system font, trying Linux specific. {str(err)}", end=' ')
+        font = None
         try:
             if platform.system() == 'Linux':
                 fontfile = 'fonts/dejavu-sans-fonts/DejaVuSans.ttf'
-                font = ImageFont.load(fontfile, 12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load(fontfile)
+                font = ImageFont.truetype(fontfile, 12)
+                print(test_font())
         except Exception as err:
             print(f"Could not load a Linux system font {fontfile}: {str(err)}")
     finally:
         fontfile = Path(__file__).parent / 'Aileron-Regular.otf'
-        # breakpoint()
+
         if not font: #or (font and not isinstance(font, ImageFont.truetype)):
-            # if font was never assigned or it was not assigned as a truetype
-            print(f"Could not any system fonts. Loading the font packaged in the repo: {fontfile}")
-            font = ImageFont.load(fontfile, 12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load(fontfile)
+            # font was never assigned or it did not pass the drawing test
+            print(f"Could not load any system fonts. Loading the font packaged in the repo: {fontfile}", end=' ')
+            try:
+                font = ImageFont.truetype(str(fontfile), 12) # if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.truetype(str(fontfile.absolute()))
+                print(test_font())
+            except Exception as err:
+                print(f"Could not load any font. Loading or using failed. Something is wrong: {str(err)}")
 
     return font
 
