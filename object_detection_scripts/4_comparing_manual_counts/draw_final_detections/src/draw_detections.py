@@ -366,7 +366,7 @@ def main(rescale_factor=4):
         crop_file_name = draw_detections_individual(individual_class, im, box_geoms, box_labels, font, individ_detec)
         detections['indv_name'] = detections['index'].map(crop_file_name)
     else:
-        print(" Skipping Drawing Boxes, --detections_file is missing or --individual_class is not selected")
+        print(" Skipping Drawing Boxes, --detections_file is missing, --individual_class is not selected or explicitly skipped with --no-indv")
     
     print("Drawing Boxes on full pano")
     if detections_file is not None and full_pano:
@@ -386,8 +386,7 @@ def main(rescale_factor=4):
 
             draw_text(draw, coords, text_str=text_str, align=horizontal_alignment, font=font, outline=False)
     else:
-        print(" Skipping Drawing Boxes on full pano, --detections_file is missing or --no-full is selected")
-
+        print(" Skipping Drawing Boxes on full pano, --detections_file is missing or explicitly skipped with --no-full")
 
     print("Draw Ground truth Annotations")
     if ground_truth_file and tile_directory and ground_truth_file.is_file() and tile_directory.exists():
