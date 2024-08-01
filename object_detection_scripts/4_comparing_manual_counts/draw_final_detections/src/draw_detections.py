@@ -305,6 +305,7 @@ def draw_box(draw:ImageDraw, color, coords, width=size_options.medium):
     else:
         draw.line(coords, fill=color, width=width)
 
+
 def get_font() -> ImageFont:
     """Load and return a TrueType font. Check for builtin fonts, a Linux Dejavu font or a font packaged in the repo
 
@@ -315,28 +316,31 @@ def get_font() -> ImageFont:
     font = None
     try:
         print(f"Loading Pillow default font.", end=' ')
-        font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.load_default()
+        font = ImageFont.load_default(size=12) if PILLOW_VERSION >= convert_version(
+            '10.1.0') else ImageFont.load_default()
+
         def test_font():
             """draw a character '@' (on a 10x10 image) using the font to confirm whether a suitable font loaded.
             Returns
                 True or raises an Exception from PIL library.
             """
 
-            text_str="@"
-            align= 'center' 
-            canvas = Image.new("RGBA", size=(10,10), color=(255, 255, 255, 0))
+            text_str = "@"
+            align = 'center'
+            canvas = Image.new("RGBA", size=(10, 10), color=(255, 255, 255, 0))
             canvas_draw = ImageDraw.Draw(canvas)
-            text_box = canvas_draw.textbbox((2, 1), #  adjust the origin coordinate of the textbox, adjust by text_height if needed 
-                            text_str,
-                            font=font,
-                            align=align,
-                            anchor='la', # Only supported for TrueType fonts
-                            # font_size=32,  # Added in version 10.1.0.
-                            )
+            text_box = canvas_draw.textbbox((2, 1),  # adjust the origin coordinate of the textbox, adjust by text_height if needed
+                                            text_str,
+                                            font=font,
+                                            align=align,
+                                            anchor='la',  # Only supported for TrueType fonts
+                                            # font_size=32,  # Added in version 10.1.0.
+                                            )
             return True
         print(test_font())
     except Exception as err:
-        print(f"Could not load default system font, trying Linux specific. {str(err)}", end=' ')
+        print(
+            f"Could not load default system font, trying Linux specific. {str(err)}", end=' ')
         font = None
         try:
             if platform.system() == 'Linux':
@@ -348,14 +352,16 @@ def get_font() -> ImageFont:
     finally:
         fontfile = Path(__file__).parent / 'Aileron-Regular.otf'
 
-        if not font: #or (font and not isinstance(font, ImageFont.truetype)):
+        if not font:  # or (font and not isinstance(font, ImageFont.truetype)):
             # font was never assigned or it did not pass the drawing test
             print(f"Could not load any system fonts. Loading the font packaged in the repo: {fontfile}", end=' ')
             try:
-                font = ImageFont.truetype(str(fontfile), 12) # if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.truetype(str(fontfile.absolute()))
+                # if PILLOW_VERSION >= convert_version('10.1.0') else ImageFont.truetype(str(fontfile.absolute()))
+                font = ImageFont.truetype(str(fontfile), 12)
                 print(test_font())
             except Exception as err:
-                print(f"Could not load any font. Loading or using failed. Something is wrong: {str(err)}")
+                print(
+                    f"Could not load any font. Loading or using failed. Something is wrong: {str(err)}")
 
     return font
 
