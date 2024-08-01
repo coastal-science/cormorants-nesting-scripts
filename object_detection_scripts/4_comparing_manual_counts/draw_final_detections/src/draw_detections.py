@@ -297,7 +297,7 @@ def draw_text(draw:ImageDraw, coords:List[Tuple], text_str:str, align:str, font:
     text_color = color_palette.get('text_color')
     if outline:
         draw.rectangle(text_box, outline=text_color, width=size_options.medium)
-    draw.text((text_box[0], text_box[1]), text_str, fill=text_color, font=font, anchor='') # left ascender corner of text box
+    draw.text((text_box[0], text_box[1]), text_str, fill=text_color, font=font, anchor='la') # left ascender corner of text box
 
 def draw_box(draw:ImageDraw, color, coords, width=size_options.medium):
     if PILLOW_VERSION >= convert_version('9.0'):
