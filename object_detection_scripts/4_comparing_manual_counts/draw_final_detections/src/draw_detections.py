@@ -274,7 +274,8 @@ def draw_text(draw:ImageDraw, coords:List[Tuple], text_str:str, align:str, font:
         outline (bool): Whether to draw the enclosing bounding box or just the text.
     """
     
-    bbox_x0, bbox_y0 = reduce(min, map(lambda x: x[0], coords)), reduce(min, map(lambda x: x[1], coords)) # left ascender corner of bbox
+    bbox_x0, _ = reduce(min, map(lambda x: x[0], coords)), reduce(min, map(lambda x: x[1], coords)) # top left corner of bbox
+    _, bbox_y1 = reduce(max, map(lambda x: x[0], coords)), reduce(max, map(lambda x: x[1], coords)) # lower right corner of bbox
 
     if PILLOW_VERSION >= convert_version('9.2.0'):
         text_box = font.getbbox(text_str) # text_box = x1, y1, x2, y2
@@ -285,8 +286,8 @@ def draw_text(draw:ImageDraw, coords:List[Tuple], text_str:str, align:str, font:
     # Coordinates are calculated manually (using the upper left corner, 0,0 as reference origin)
     # TODO: Calculate text box coordinates programatically using shapely geometric objects
     
-    text_box = draw.textbbox((bbox_x0, bbox_y0-text_height), 
-                            #  adjust the top-left coordinate by text_height
+    text_box = draw.textbbox((bbox_x0, bbox_y1), 
+                            #  adjust the origin coordinate of the textbox, adjust by text_height if needed
                             text_str,
                             font=font,
                             align=align,
