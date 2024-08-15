@@ -142,4 +142,4 @@ if __name__ == "__main__":
 
     SORTED_COLUMNS = ["detection_id", "beam_id", "pano_left", "pano_right", "indv_name", "image_left", "image_right", "image",]
     
-    main(image_name, input_csv_file, right, output_file, swap)
+    main(image_name, str(input_csv_file), right, output_file, swap)
