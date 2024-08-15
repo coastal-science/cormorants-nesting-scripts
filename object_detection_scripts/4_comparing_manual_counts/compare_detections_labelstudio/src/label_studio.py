@@ -5,7 +5,7 @@ import json
 import sys
 PYTHON_VERSION = tuple(map(int, sys.version.split()[0].split(".")))
 
-def main(input_file:str, right, output_file, swap:bool):
+def main(image_name:str, input_file:str, right, output_file, swap:bool):
     """Reshape the input csv into a shape that can be used for a Label Studio labeling task 
     to compare individual detections from one day against the next day's panorama, the status of nest
 
@@ -35,7 +35,7 @@ def main(input_file:str, right, output_file, swap:bool):
     df['detection_classes'] = df['detection_classes'].astype(int).replace({0:'nest', 1:'cormorant'})
 
     df['pano_right'] = df['image'].map(lambda p: Path(p).parent.name).astype(str)
-    # df["compare_with"] = df[compare_with] if isinstance(compare_with, str) else compare_with
+    
     df["pano_left"] = right
 
     image1 = URL_PREFIX + df['pano_left'] + file_type
@@ -56,7 +56,7 @@ def main(input_file:str, right, output_file, swap:bool):
     # df['data'] = data
 
     if swap:
-        # print(df.loc[0])
+        # Swap all column names *left with *right
         swap_dict = {'left':'right', 'right':'left'}
         def swap_str(name:str):
             name = name.lower()
@@ -68,7 +68,7 @@ def main(input_file:str, right, output_file, swap:bool):
         df = df.rename(columns=dict(zip(lr_cols, lr_cols_renamed)))
         # print(df.loc[0])
 
-    # Shape to list of json shape
+    # Shape to list of json
     COLS = df.columns.to_list()
     COLS = [c for c in COLS if c not in SORTED_COLUMNS]
     df = df[SORTED_COLUMNS + COLS]
@@ -96,25 +96,26 @@ if __name__ == "__main__":
         parser.add_argument('--swap', 
                             default=False, required=False, 
                             action='store_true', 
-                            help='Swap references left, right references. Default is False, which means left_image=pano, right_image=indv.')
+                            help='Swap left, right references. Default is False, which means left_image=pano, right_image=indv.')
         parser.add_argument('--no-swap', dest='swap', action='store_false')
     else:
         parser.add_argument('--swap', 
                             type=bool, 
                             default=False, required=False, 
                             action=argparse.BooleanOptionalAction, 
-                            help='Swap references left, right references. Default is False, which means left_image=pano, right_image=indv.')
+                            help='Swap left, right references. Default is False, which means left_image=pano, right_image=indv.')
 
     args = parser.parse_args()
 
     input_csv_file = Path(args.input_file)
     right = args.right
     folder_prefix = args.folder_prefix
-    out_folder = (Path(args.out_folder))#/ input_csv_file.name).with_suffix('.json')
+    out_folder = Path(args.out_folder) #/ input_csv_file.name).with_suffix('.json')
     swap = args.swap
 
     out_name = input_csv_file.stem + "_" + "label_studio"
     output_file = (out_folder/out_name).with_suffix(".json")
+    image_name = str(input_csv_file.stem)
 
     i = 1 # do not overwrite existing file, append a digit to make it a unique file name
     while output_file.exists():
@@ -125,7 +126,7 @@ if __name__ == "__main__":
     assert not Path(folder_prefix).is_absolute(), "The folder in label studio cannot be an absolute path"
     assert ".." not in Path(folder_prefix).parents, "The folder in label studio cannot contain relative (..) paths"
     
-    folder_prefix = folder_prefix.rstrip("/") + "/"
+    folder_prefix = folder_prefix.strip("/") + "/"
 
     # files from Label Studio local storage are served with the url '/data/local-files/?d=samples/2023_pairs/SNB_20210705/detection_tiles/145.jpg'
     # URL_PREFIX='/data/local-files/?d=samples/2023_pairs/'
@@ -134,4 +135,4 @@ if __name__ == "__main__":
 
     SORTED_COLUMNS = ["detection_id", "beam_id", "pano_left", "pano_right", "indv_name", "image_left", "image_right", "image",]
     
-    main(input_csv_file, right, output_file, swap)
+    main(image_name, input_csv_file, right, output_file, swap)
