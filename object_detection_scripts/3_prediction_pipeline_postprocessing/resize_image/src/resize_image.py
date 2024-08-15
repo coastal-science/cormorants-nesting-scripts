@@ -14,7 +14,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def main(img_file, out_file, rescale_factor=10):
     fullsize_im = Image.open(img_file)
-    im = fullsize_im.reduce(factor=rescale_factor)
+    im = fullsize_im.reduce(factor=rescale_factor) # If the size of the image is not dividable by factor, the resulting size will be rounded up.
     rgb_im = im.convert('RGB')
 
     # Save
