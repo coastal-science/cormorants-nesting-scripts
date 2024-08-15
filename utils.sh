@@ -66,3 +66,38 @@ progress(){
 }
 
 # progress "output/folder" "logs/folder"
+
+run_permission_fixer(){
+  recurse=$1
+  # echo cd ~/projects/ctb-ruthjoy/jilliana/Tensorflow/workspace
+  echo cd $(pwd)
+  cd $(pwd)
+  myprogramout=nohup_perm_fixer_$USER.out
+  echo $myprogramout
+  if [[ "$recurse" == \-* ]] && [[ "$recurse" == \-R ]] ; then
+      echo nohup chmod -R g+rw * > $myprogramout 2>&1
+      nohup chmod -R g+rw * > $myprogramout 2>&1
+  else
+      echo nohup chmod g+rw * > $myprogramout 2>&1
+      nohup chmod g+rw * > $myprogramout 2>&1
+  fi
+  # echo chmod g+rw nohup.out
+  # chmod g+rw nohup.out
+  echo chmod g+rw $myprogramout
+  chmod g+rw $myprogramout
+  cd -
+}
+
+run_permission_fixer_interrupt(){
+  # Update permissions of the nohup output file
+  echo cd $(pwd)
+  cd $(pwd)
+  myprogramout=nohup_perm_fixer_$USER.out
+  echo $myprogramout
+
+
+  echo chmod g+rw $myprogramout
+  chmod g+rw $myprogramout
+  cd -
+
+}
