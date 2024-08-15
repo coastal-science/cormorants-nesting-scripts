@@ -53,8 +53,7 @@ def main(image_name:str, input_file:str, right, output_file, swap:bool):
 
     image1 = URL_PREFIX + df['pano_left']
     image2 = URL_PREFIX + df['indv_name']# df['pano_right'] + '/detection_tiles/' + df['id'].astype(str) + file_type
-    # images = [image1, image2, df['detection_classes']]
-    # image_labels = ["image1", "image2", 'detection_classes']
+
     df['image_left'] = image1
     df['image_right'] = image2
 
@@ -63,10 +62,6 @@ def main(image_name:str, input_file:str, right, output_file, swap:bool):
             df[col] = ''
     df = df.rename(columns={'id':'detection_id'})
 
-    ## for elem in zip(image1, image2):
-    #    # print(dict(zip(["image1", "image2"], elem)))
-    # data = [dict(zip(image_labels, elem)) for elem in zip(*images)]
-    # df['data'] = data
 
     if swap:
         # Swap all column names *left with *right
@@ -79,7 +74,6 @@ def main(image_name:str, input_file:str, right, output_file, swap:bool):
         lr_cols = [ c for c in df.columns if 'left' in c.lower() or 'right' in c.lower() ]
         lr_cols_renamed = list(map(swap_str, lr_cols))
         df = df.rename(columns=dict(zip(lr_cols, lr_cols_renamed)))
-        # print(df.loc[0])
 
     # Shape to list of json
     COLS = df.columns.to_list()
@@ -123,7 +117,7 @@ if __name__ == "__main__":
     input_csv_file = Path(args.input_file)
     right = args.right
     folder_prefix = args.folder_prefix
-    out_folder = Path(args.out_folder) #/ input_csv_file.name).with_suffix('.json')
+    out_folder = Path(args.out_folder)
     swap = args.swap
 
     out_name = input_csv_file.stem + "_" + "label_studio"
