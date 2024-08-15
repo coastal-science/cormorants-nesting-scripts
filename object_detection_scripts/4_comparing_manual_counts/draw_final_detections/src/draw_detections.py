@@ -175,8 +175,8 @@ def draw_ground_truth_annotations(draw, ground_truth_file, tile_directory, anno_
 
 def validate_scale(scale_factor):
     """ Validate argument inputs for 1D or 2D 'scale' or 'rescale' -ing.
-
-        TODO: Can this function be replaced with appropriate type hint? Take into consideration python 3.7 support due to object_detection TF package in the pip environment
+    
+    Inputs:
         scale_factor (_type_): int | float | numeric | [numeric, numeric] | (numeric, numeric)
 
     Returns:
