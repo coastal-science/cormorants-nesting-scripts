@@ -537,7 +537,6 @@ if __name__ == '__main__':
     detections_file = Path(args.detections_file)
     mask_file = Path(args.mask_file) if args.mask_file else args.mask_file
 
-    # TODO: check for duplication/overlap in `draw_ground_truth_annotations`
     tile_size = args.tile_size
     anno_tile_size = args.anno_tile_size
     rescale_factor = args.rescale_factor
