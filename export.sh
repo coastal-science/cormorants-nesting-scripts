@@ -12,9 +12,9 @@ source ${ENVDIR}/bin/activate && \
 echo && echo "LOG STATUS: Activated environment ""$NAME"
 
 # Prepare Environment
-#module load python/3.7 protobuf gcc/9.3.0 arrow/2.0.0 cuda cudnn
+#module load StdEnv/2020 python/3.7 protobuf gcc/9.3.0 arrow/2.0.0 cuda cudnn
 #source ../tensorflow/bin/activate
-#module load python/3.6 protobuf gcc/9.3.0 arrow/2.0.0 cuda cudnn
+#module load StdEnv/2020 python/3.6 protobuf gcc/9.3.0 arrow/2.0.0 cuda cudnn
 #pip install tensorflow protobuf Cython pycocotools --no-index
 #pip install tf-models-official==2.5.1
 #pip install pyarrow==2.0.0
