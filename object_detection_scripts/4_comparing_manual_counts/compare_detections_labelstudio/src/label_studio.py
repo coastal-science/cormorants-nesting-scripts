@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     i = 1 # do not overwrite existing file, append a digit to make it a unique file name
     while output_file.exists():
-        output_file = output_file.with_stem(out_name + "_" + str(i))
+        output_file = output_file.with_name(out_name + "_" + str(i)).with_suffix(".json")
         i += 1
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
