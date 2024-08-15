@@ -1,5 +1,47 @@
 """
 e.g.
+Example Usage
+Rescale by 4, and create individual detections for label 1 (nests); don't create a full pano.
+```bash
+python src/draw_detections.py \
+    --img_file input/../...tif \
+    --detections_file input/../...csv \
+    ... \
+    --rescale_factor 4
+    --individual_class 1
+    --no-full
+```
+
+Rescale by 7, don't create individual detections; create a full panorama
+```bash
+python src/draw_detections.py \
+    --img_file input/../...tif \
+    --detections_file input/../...csv \
+    ... \
+    --rescale_factor 7 \
+    --no-indv
+```
+
+Create individual detection images for all detections; don't create a full pano
+```bash
+python src/draw_detections.py \
+    --img_file input/../...tif \
+    --detections_file input/../...csv \
+    ... \
+    --individual_class -1 \
+    --no-full
+```
+
+Don't create individual detections; don't create a full pano; only reduce and draw the mask
+```bash
+python src/draw_detections.py \
+    --img_file input/../...tif \
+    --detections_file input/../...csv \
+    -- mask_file input/....csv \
+    ... \
+    --no-full \
+    --no-indv
+```
 """
 import matplotlib.pyplot as plt
 import pandas as pd
