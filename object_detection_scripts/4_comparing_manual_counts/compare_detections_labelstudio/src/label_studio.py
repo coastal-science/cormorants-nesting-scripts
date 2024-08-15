@@ -80,7 +80,7 @@ def main(image_name:str, input_file:str, right, output_file, swap:bool):
     COLS = [c for c in COLS if c not in SORTED_COLUMNS]
     df = df[SORTED_COLUMNS + COLS]
     
-    data = df.head(2).to_dict(orient='records')
+    data = df.to_dict(orient='records')
     data = [ {'data': d} for d in data ]
     print(json.dumps(data, indent=4))
 
