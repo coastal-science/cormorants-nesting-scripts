@@ -28,18 +28,31 @@ def main(image_name:str, input_file:str, right, output_file, swap:bool):
     input_file = Path(input_file)
     df = pd.read_csv(input_file, index_col=0)
     df = df.reset_index().rename(columns={'index':'id'})
-    
-    first_image = df['indv_name'].first_valid_index()
-    sample_image = df['indv_name'].loc[first_image]
-    file_type = Path(sample_image).suffix # '.jpg' or '.png'
+    df = df.dropna(subset=["indv_name"])
+        
+    def extract_relative(path:str)-> str:
+        """ Extract individual detection file path relative to the name of its own full pano
+        """
+        path = Path(path)
+        i = [i for i, p in enumerate(path.parents) if image_name in p.name]
+        assert i, f"'{image_name}' is not in the path of indv_name={path}."
+        i = i[0]
+        p = path.parents[i]
+        p = p.parent if p.parent != "/" else p
+        path = path.relative_to(p.parent)
+        
+        return str(path)
+
+    df['indv_name'] = df['indv_name'].apply(extract_relative)
+
     df['detection_classes'] = df['detection_classes'].astype(int).replace({0:'nest', 1:'cormorant'})
 
     df['pano_right'] = df['image'].map(lambda p: Path(p).parent.name).astype(str)
     
     df["pano_left"] = right
 
-    image1 = URL_PREFIX + df['pano_left'] + file_type
-    image2 = URL_PREFIX + df['pano_right'] + '/detection_tiles/' + df['id'].astype(str) + file_type
+    image1 = URL_PREFIX + df['pano_left']
+    image2 = URL_PREFIX + df['indv_name']# df['pano_right'] + '/detection_tiles/' + df['id'].astype(str) + file_type
     # images = [image1, image2, df['detection_classes']]
     # image_labels = ["image1", "image2", 'detection_classes']
     df['image_left'] = image1
