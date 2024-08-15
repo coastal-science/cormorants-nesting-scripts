@@ -10,6 +10,7 @@ def main(image_name:str, input_file:str, right, output_file, swap:bool):
     to compare individual detections from one day against the next day's panorama, the status of nest
 
     Args:
+        image_name (str): Name of full panorama corresponding to the detections input file
         input_file (Path): input csv (generated from draw_final_detections.py)
                         csv must contain minimum columns for 
                         'index' (int), 
