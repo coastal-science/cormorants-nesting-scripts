@@ -45,7 +45,7 @@ The very first time, you may be asked if you want to continue connecting. Type `
 * `sbatch <file.sh>` - submits a job to the slurm job scheduler. There are many options you can provide to SBATCH, which can be specified in the command line, or at the top of the batch script you are submitting to the scheduler.    
 * `sq` or `squeue -u <username>` - Shows what commands you currently have in the slurm queue. 
 * `scancel <job_number>` - Will stop the specified job from running.    
-* `sb` - provided you have run `source user_profile` this provides an alias for sbatch, that adds in your mail_user automatically.   
+* `sb` - provided you have run `source user_profile.sh` this provides an alias for sbatch, that adds in your mail_user automatically.   
 
 
 ## Using `nano`
