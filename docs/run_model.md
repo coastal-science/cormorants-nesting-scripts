@@ -66,10 +66,17 @@ Create a JSON document which specifies image & task-path pairs. The file should 
     * `--time=D-H:MM:SS` You will need approximately 15-20 minutes per panorama.
     * `--mail-user=email@address.ca` the email where notifications are sent.
   * `JSON_FILE` - change this to reference the JSON file corresponding to the panoramas you will be running through the model. 
+> [!Tip]
+> You can set email notifications with either:
+> 1. The command line argument `--mail-user=email@address.ca` during submitting a job with `sbatch` or `sb`,
+> 2. The directive `#SBATCH --mail-user=email@address.ca` at the top of a job file, e.g. run_model_on_new_pano.sh, or
+> 3. An entry with your username and email in `user_profile.sh` for all subsequent job in the session after activating `source user_profile.sh`. 
+>
+> We recommend to **use only one** of these approaches, and not all of them.
 
 * Submit the job to the batch scheduler (slurm)
   ```shell
-  sb --time=1:0:0 run_model_on_new_pano.sh
+  sb --time=1:00:00 run_model_on_new_pano.sh
   ```
   
 * You will receive a response such as `Submitted batch job 123456789` which shows your job ID (in this case, `1234556789`).    
@@ -97,7 +104,7 @@ Create a JSON document which specifies image & task-path pairs. The file should 
 ----
 ### Configure Your User Profile
 `nano user_profile.sh`
-make sure there is an entry for yourself. If you have a sponsored account, your `SLURM_JOB_ACCOUNT` will be `def-sponsor`, where sponsor is your sponsor's username. If you do not have a sponsored account (i.e. are a PI) than your `SLURM_JOB_ACCOUNT` will be `def-user`, where `user` is your own username.
+make sure there is an entry for yourself. If you have a sponsored account, your `SLURM_JOB_ACCOUNT` will be `def-sponsor`, where sponsor is your sponsor's username. If you do not have a sponsored account (i.e. are a PI) then your `SLURM_JOB_ACCOUNT` will be `def-user`, where `user` is your own username.
 ```bash
     user )
       export SLURM_JOB_ACCOUNT=def-ruthjoy
