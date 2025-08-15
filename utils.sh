@@ -72,7 +72,14 @@ run_permission_fixer(){
   # echo cd ~/projects/ctb-ruthjoy/jilliana/Tensorflow/workspace
   echo cd $(pwd)
   cd $(pwd)
+  
   myprogramout=nohup_perm_fixer_$USER.out
+  touch $myprogramout
+  # echo chmod g+rw nohup.out
+  # chmod g+rw nohup.out
+  echo chmod g+rw $myprogramout
+  chmod g+rw $myprogramout
+
   echo $myprogramout
   if [[ "$recurse" == \-* ]] && [[ "$recurse" == \-R ]] ; then
       echo nohup chmod -R g+rw * > $myprogramout 2>&1
@@ -81,10 +88,7 @@ run_permission_fixer(){
       echo nohup chmod g+rw * > $myprogramout 2>&1
       nohup chmod g+rw * > $myprogramout 2>&1
   fi
-  # echo chmod g+rw nohup.out
-  # chmod g+rw nohup.out
-  echo chmod g+rw $myprogramout
-  chmod g+rw $myprogramout
+  
   cd -
 }
 
