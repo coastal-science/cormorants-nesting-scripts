@@ -244,7 +244,12 @@ def main(detection_csv, mask=False, deduplicate_nests=False, merge_duplicate_nes
         df = remove_duplicate_nests(df, merge_duplicates=merge_duplicate_nests)
 
     print("Writing Output File ...")
-    df.to_csv(out_file, index=False)
+    
+    # Avoid detection_id=0 to prevent messy data / confusion with NA, "", missing value etc
+    id_offset = 11 # ids are two-digit (and above)
+    df = df.set_axis(pd.RangeIndex(start=id_offset, stop=len(df)+id_offset, step=1)) # reportedly faster than df.index += 1
+    
+    df.to_csv(out_file, index=True)
 
 
 if __name__ == '__main__':
