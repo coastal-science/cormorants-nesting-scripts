@@ -66,91 +66,84 @@ progress(){
 }
 
 # progress "output/folder" "logs/folder"
-run_permission_fixer() {
-  # Usage: 
-  # To apply this function recursively:
-  #     $ run_permission_fixer "-R" "your_target_group"
-  # To apply this function non-recursively:
-  #     $ run_permission_fixer "-1" "your_target_group"
 
-  recurse=$1
-  target_group=$2
+run_permission_fixer() {
+  # Usage:
+  # Args:
+  #   1: group name. The default is the group owner of the pwd (.), `stat -c "%G"``
+  #   2: '-R' for recusion. Any other value will only update the `log file` 'nohup_perm_fixer_$USER.out' 
+  # To apply this function recursively:
+  #     $ run_permission_fixer "your_target_group" "-R"
+  # To apply this function non-recursively:
+  #     $ run_permission_fixer "your_target_group"
+  # 
+
+  target_group=$1 # ${2:-$(stat -c "%G" .)} # group of pwd
+  recurse=${2:--1}
   
   # Ensure we're operating on the current working directory
   echo "Operating in directory: $(pwd)"
   
   # Output file for logging purposes
-  myprogramout=nohup_perm_fixer_$USER.out
-  touch "$myprogramout"
+  log_file=nohup_perm_fixer_$USER.out
+  touch "$log_file"
+  chmod g+w "$log_file"
 
-  date --iso-8601=seconds | tee -a "$myprogramout"
-  echo "Operating in directory: $(pwd)" | tee -a "$myprogramout"
+  date --iso-8601=seconds | tee -a "$log_file"
+  echo "Operating in directory: $(pwd)" | tee -a "$log_file"
   found=0
   total=0
 
-  # Recursively or non-recursively process files
-  if [[ "$recurse" == "-R" ]]; then
-    echo "Changing group and permissions recursively" | tee -a "$myprogramout"
-
-    # Find all files owned by $USER and $target_group
-    # lfs find . -user "$USER" -group "$target_group" -type f \
-    (lfs find . -user "$USER" -group "$target_group" -type d ; \
-      lfs find . -user "$USER" -group "$target_group" -type f) \
-      | while read -r file; do
-      ((total++))
-      # Check if the group has write permission using stat
-      perm=$(stat -c "%a" "$file") # returs 3 digits with octal permissions
-      # Extract the second digit (group permission) from the octal permissions
-      group_perm=$(( (perm / 10) % 10 ))
-
-      # Check if the group has write permission
-      if [ $group_perm -lt 6 ]; then
-        # If the numeric permission is less than 660, the group does not have write permission
-        # 2750: Group is sticky 'drwxr-s---'
-        # 660: Group has read and write permission. 'drwxrw----'
-        # 644: Group has only read permission. 'drwxr--r--'
-
-        echo "Updating permissions ($group_perm) for $file"
-        echo "$perm, $group_perm: $file" | tee -a "$myprogramout"
-        chmod g+rw "$file" | tee -a "$myprogramout"
-        # chgrp "$target_group" "$file"
-        ((found++))
-      fi
-    done
-  
-  else
-    echo "Changing group and permissions non-recursively" | tee -a "$myprogramout"
+  # Function to process files and update permissions
+  process_files() {
+    local files
+    files=$1
+    change=$2
     
-    # Non-recursively find files in the current directory only
-    # lfs find . -maxdepth 1 -user "$USER" -group "$target_group" -type f -type d \
-    # | while read -r file; do
-    (lfs find . -maxdepth 1  -user "$USER" -group "$target_group" -type d ; \
-      lfs find . -maxdepth 1 -user "$USER" -group "$target_group" -type f) \
-      | while read -r file; do
+    [[ "$change" == "true" ]] && echo "Changing permissions." || echo "Only counting."
+
+    echo "$files" | while read -r file; do
       ((total++))
-      # Check if the group has write permission using stat
-      perm=$(stat -c "%a" "$file") # returs 3 digits with octal permissions
-      # Extract the second digit (group permission) from the octal permissions
-      group_perm=$(( (perm / 10) % 10 ))
+      perm=$(stat -c "%a" "$file")  # Get octal permissions
+      group_perm=$(( (perm / 10) % 10 ))  # Extract the second digit (group permission)
 
       # Check if the group has write permission
       if [ $group_perm -lt 6 ]; then
-        # If the numeric permission is less than 660, the group does not have write permission
-        # 2750: Group is sticky 'drwxr-s---'
-        # 660: Group has read and write permission. 'drwxrw----'
-        # 644: Group has only read permission. 'drwxr--r--'
-        echo "Updating permissions for $file"
-        echo "$file" | tee -a "$myprogramout"
-        chmod g+rw "$file" | tee -a "$myprogramout"
-        # chgrp "$target_group" "$file"
+        echo "Updating permissions ($group_perm) for $file"
+        echo "$perm, $group_perm: $file" | tee -a "$log_file"
+        chmod g+rw "$file" | tee -a "$log_file"
+        # chgrp "$target_group" "$file"  # Uncomment if you need to change the group
         ((found++))
       fi
     done
-  fi
+  }
 
-  echo "Permission fix completed. Updated $total files and folders. Output logged to $myprogramout" | tee -a "$myprogramout"
-  echo "" | tee -a "$myprogramout"
-  echo "" | tee -a "$myprogramout"
+  # Function to find files and directories
+  find_files() {
+    local search_depth
+    search_depth=$1
+
+    # Find files and directories based on recursion flag
+    if [[ "$search_depth" == "-R" ]]; then
+      (lfs find . -user "$USER" -group "$target_group" -type d ; \
+       lfs find . -user "$USER" -group "$target_group" -type f)
+    else
+      (lfs find . -maxdepth 1 -user "$USER" -group "$target_group" -type d ; \
+       lfs find . -maxdepth 1 -user "$USER" -group "$target_group" -type f)
+    fi
+  }
+
+  # Recursively or non-recursively find and process files
+  echo "Changing group and permissions $([[ "$recurse" == "-R" ]] && echo "recursively" || echo "non-recursively")" | tee -a "$log_file"
+
+  echo "Counting files owned by user=$UNAME and group=$target_group that does not have group 'w' permissions."
+
+  files=$(find_files "$recurse")
+  process_files "$files" "true"
+
+  echo "Permission fix completed. Updated $found files/folders out of $total. Output logged to $log_file" | tee -a "$log_file"
+  echo "" | tee -a "$log_file"
+  echo "" | tee -a "$log_file"
 }
 
 run_permission_fixer_interrupt() {
@@ -160,44 +153,35 @@ run_permission_fixer_interrupt() {
   echo "Operating in directory: $(pwd)"
   
   # Output file for logging purposes
-  myprogramout=nohup_perm_fixer_$USER.out
-  touch "$myprogramout"
-  
-  date --iso-8601=seconds | tee -a "$myprogramout"
-  echo "Operating in directory: $(pwd)" | tee -a "$myprogramout"
+  log_file=nohup_perm_fixer_$USER.out
+  touch "$log_file"
+  chmod g+w "$log_file"
+
+  date --iso-8601=seconds | tee -a "$log_file"
+  echo "Operating in directory: $(pwd)" | tee -a "$log_file"
 
   # Log the permission change for nohup output
-  echo "Changing permissions of $myprogramout" | tee -a "$myprogramout"
-  chmod g+rw "$myprogramout"
+  echo "Changing permissions of $log_file" | tee -a "$log_file"
+  chmod g+rw "$log_file"
 
-  # Group and permissions update
-  echo "Changing group and permissions of nohup_perm_fixer file" | tee -a "$myprogramout"
+  # Group and permissions update for the file
+  echo "Changing group and permissions of nohup_perm_fixer file" | tee -a "$log_file"
 
-  lfs find "$myprogramout" -user "$USER" -group "$target_group" -type f | while read -r file; do
-    
-    perm=$(stat -c "%a" "$file") # returs 3 digits with octal permissions
-    # Extract the second digit (group permission) from the octal permissions
-    group_perm=$(( (perm / 10) % 10 ))
+  # Process the file
+  files=$(lfs find "$log_file" -user "$USER" -group "$target_group" -type f)
+  process_files "$files" "true"
 
-    # Check if the group has write permission
-    if [ $group_perm -lt 6 ]; then
-      # If the numeric permission is less than 660, the group does not have write permission
-      # 2750: Group is sticky 'drwxr-s---'
-      # 660: Group has read and write permission. 'drwxrw----'
-      # 644: Group has only read permission. 'drwxr--r--'
-      echo "Updating permissions for $file"
-      echo "$file" | tee -a "$myprogramout"
-      chmod g+rw "$file" | tee -a "$myprogramout"
-      # chgrp "$target_group" "$file"
-    fi
-  done
-
-  echo "Permission fix completed. Output logged to $myprogramout" | tee -a "$myprogramout"
+  echo "Permission fix completed. Output logged to $log_file" | tee -a "$log_file"
 }
 
-count_file(){
+
+count_permission_files(){
   UNAME=${1:-$USER}
   target_group=${2:-$(stat -c "%G" .)} # group of pwd
+
+  log_file=nohup_perm_counter_$USER.out
+  touch "$log_file"
+  chmod g+w "$log_file"
 
   echo "Counting files owned by user=$UNAME and group=$target_group that does not have group 'w' permissions."
   # lfs find . -user "$UNAME" -type f | while read -r file; do
@@ -220,11 +204,14 @@ count_file(){
         # 660: Group has read and write permission. 'drwxrw----'
         # 654: Group has only read permission. 'drwxr-xr--'
         # 644: Group has only read permission. 'drwxr--r--'
-        echo "$perm, $group_perm: $file" | tee -a nohup_perm_counter_$USER.out
+        echo "$perm, $group_perm: $file" | tee -a $log_file
         ((found++))
       fi
-    done | tee -a nohup_perm_counter_$USER.out
-    echo "Total files and folders found are $found / $total."
+    done | tee -a $log_file
+  echo "Total files and folders found are $found / $total." | tee -a $log_file
+
+  echo "" | tee -a "$log_file"
+  echo "" | tee -a "$log_file"
 }
 
 count_all(){
