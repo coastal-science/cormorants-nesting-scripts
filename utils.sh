@@ -66,42 +66,132 @@ progress(){
 }
 
 # progress "output/folder" "logs/folder"
+run_permission_fixer() {
+  # Usage: 
+  # To apply this function recursively:
+  #     $ run_permission_fixer "-R" "your_target_group"
+  # To apply this function non-recursively:
+  #     $ run_permission_fixer "-1" "your_target_group"
 
-run_permission_fixer(){
   recurse=$1
-  # echo cd ~/projects/ctb-ruthjoy/jilliana/Tensorflow/workspace
-  echo cd $(pwd)
-  cd $(pwd)
+  target_group=$2
   
+  # Ensure we're operating on the current working directory
+  echo "Operating in directory: $(pwd)"
+  
+  # Output file for logging purposes
   myprogramout=nohup_perm_fixer_$USER.out
-  touch $myprogramout
-  # echo chmod g+rw nohup.out
-  # chmod g+rw nohup.out
-  echo chmod g+rw $myprogramout
-  chmod g+rw $myprogramout
+  touch "$myprogramout"
 
-  echo $myprogramout
-  if [[ "$recurse" == \-* ]] && [[ "$recurse" == \-R ]] ; then
-      echo nohup chmod -R g+rw * > $myprogramout 2>&1
-      nohup chmod -R g+rw * > $myprogramout 2>&1
-  else
-      echo nohup chmod g+rw * > $myprogramout 2>&1
-      nohup chmod g+rw * > $myprogramout 2>&1
-  fi
+  date --iso-8601=seconds | tee -a "$myprogramout"
+  echo "Operating in directory: $(pwd)" | tee -a "$myprogramout"
+
+  # Recursively or non-recursively process files
+  if [[ "$recurse" == "-R" ]]; then
+    echo "Changing group and permissions recursively" | tee -a "$myprogramout"
+
+    # Find all files owned by $USER and $target_group
+    lfs find . -user "$USER" -group "$target_group" | while read -r file; do
+      # Check if the group has write permission using stat
+      # if ! stat -c "%A" "$file" | grep -q "^.rw"; then
+      # if ! stat -c "%A" "$file" | grep -q "^.r.w"; then
+        # If group doesn't have write permission, update the permissions and group
+        # grep -q "^.r.w": This checks if the permissions include group write (r.w for group). The ^ ensures we only check the group write permission part of the string.
+        # ^ matches the start of the permission string.
+        # .r.w checks for group read and write permissions (the . before r is for any permission on the user).
+      if [ $(stat -c "%a" "$file") -lt 660 ]; then
+        # If the numeric permission is less than 660, the group does not have write permission
+        # 660: Group has read and write permission.
+        # 644: Group has only read permission.
+        echo "Updating permissions for $file"
+        echo "$file" | tee -a "$myprogramout"
+        chmod g+rw "$file" | tee -a "$myprogramout"
+        # chgrp "$target_group" "$file"
+      fi
+    done
   
-  cd -
+  else
+    echo "Changing group and permissions non-recursively" | tee -a "$myprogramout"
+    
+    # Non-recursively find files in the current directory only
+    lfs find . -maxdepth 1 -user "$USER" -group "$target_group" | while read -r file; do
+      # Check if the group has write permission using stat
+      # if ! stat -c "%A" "$file" | grep -q "^.rw"; then
+      # if ! stat -c "%A" "$file" | grep -q "^.r.w"; then
+        # If group doesn't have write permission, update the permissions and group
+        # grep -q "^.r.w": This checks if the permissions include group write (r.w for group). The ^ ensures we only check the group write permission part of the string.
+        # ^ matches the start of the permission string.
+        # .r.w checks for group read and write permissions (the . before r is for any permission on the user).
+      if [ $(stat -c "%a" "$file") -lt 660 ]; then
+        # If the numeric permission is less than 660, the group does not have write permission
+        # 660: Group has read and write permission.
+        # 644: Group has only read permission.
+        echo "Updating permissions for $file"
+        echo "$file" | tee -a "$myprogramout"
+        chmod g+rw "$file" | tee -a "$myprogramout"
+        # chgrp "$target_group" "$file"
+      fi
+    done
+  fi
+
+  echo "Permission fix completed. Output logged to $myprogramout" | tee -a "$myprogramout"
+  echo "" | tee -a "$myprogramout"
+  echo "" | tee -a "$myprogramout"
 }
 
-run_permission_fixer_interrupt(){
-  # Update permissions of the nohup output file
-  echo cd $(pwd)
-  cd $(pwd)
+run_permission_fixer_interrupt() {
+  target_group=$1
+
+  # Ensure we're operating on the current working directory
+  echo "Operating in directory: $(pwd)"
+  
+  # Output file for logging purposes
   myprogramout=nohup_perm_fixer_$USER.out
-  echo $myprogramout
+  touch "$myprogramout"
+  
+  date --iso-8601=seconds | tee -a "$myprogramout"
+  echo "Operating in directory: $(pwd)" | tee -a "$myprogramout"
 
+  # Log the permission change for nohup output
+  echo "Changing permissions of $myprogramout" | tee -a "$myprogramout"
+  chmod g+rw "$myprogramout"
 
-  echo chmod g+rw $myprogramout
-  chmod g+rw $myprogramout
-  cd -
+  # Group and permissions update
+  echo "Changing group and permissions of nohup_perm_fixer file" | tee -a "$myprogramout"
 
+  lfs find "$myprogramout" -user "$USER" -group "$target_group" | while read -r file; do
+    # Check if the group has write permission using stat
+    if [ $(stat -c "%a" "$file") -lt 660 ]; then
+      # If the numeric permission is less than 660, the group does not have write permission
+      # 660: Group has read and write permission.
+      # 644: Group has only read permission.
+      echo "Updating permissions for $file"
+      echo "$file" | tee -a "$myprogramout"
+      chmod g+rw "$file" | tee -a "$myprogramout"
+      # chgrp "$target_group" "$file"
+    fi
+  done
+
+  echo "Permission fix completed. Output logged to $myprogramout" | tee -a "$myprogramout"
+}
+
+count_file(){
+  UNAME=${1:-$USER}
+  echo "Counting files owned by $UNAME that does not have 'w' in group permissions."
+  lfs find . -user "$UNAME" -type f | while read -r file; do
+    if [ $(stat -c "%a" "$file") -lt 660 ]; then
+      # If the numeric permission is less than 660, the group does not have write permission
+      # 660: Group has read and write permission.
+      # 644: Group has only read permission.
+      echo "$file"
+    fi
+  done | wc -l
+}
+
+count_all(){
+  UNAME=${1:-$USER}
+  echo "Counting all files with the command"
+  echo "  \$ time lfs find . | wc -l"
+  echo "Counting all files owned by $UNAME with the comand"
+  echo "  \$ time lfs find . -user $UNAME | wc -l"
 }
