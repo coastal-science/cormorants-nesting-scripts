@@ -75,7 +75,7 @@ find_files() {
 
   if [[ "$recurse" == "-R" ]]; then 
     # Recursively find files and directories
-    #     with -print0 for null-terminated output
+    #                     with -print0 for null-terminated output
     (lfs find . -user "$USER" -group "$target_group" -type d ; \
      lfs find . -user "$USER" -group "$target_group" -type f)
   else
@@ -89,7 +89,6 @@ find_files() {
 process_files() {
   local files=$1
   local change=$2
-  local log_file=$3
   found=0
   total=0
 
@@ -109,18 +108,20 @@ process_files() {
         # 660: Group has read and write permission. 'drwxrw----'
         # 644: Group has only read permission. 'drwxr--r--'
 
-      echo "$perm, $group_perm: $file" | tee -a "$log_file"
+      echo "$perm, $group_perm: $file"
       if [[ "$change" == "true" ]]; then
-        chmod g+rw "$file" | tee -a "$log_file"
+        chmod g+rw "$file"
         # Uncomment the line below to change the group as well
         # chgrp "$target_group" "$file"
       fi
       ((found++))
     fi
-  done <<< "$files"  # Here, we pass the files directly to the loop
+  done <<< "$files"  # Here, we pass the files directly to the loop, 
+  # pipe (|) creates a subshell and the counters do not propagate back their values.
 
   # Return the count of files processed
-  echo "$found files updated out of $total processed." | tee -a "$log_file"
+  total_dir=$(lfs find . | wc -l)
+  echo "$found files counted/updated out of $total available: $total_dir all users."
 }
 
 run_permission_fixer() {
@@ -137,29 +138,22 @@ run_permission_fixer() {
   target_group=$1 # ${2:-$(stat -c "%G" .)} # group of pwd
   recurse=${2:--1}
   UNAME=$USER
-
-  # Ensure we're operating on the current working directory
-  echo "Operating in directory: $(pwd)"
   
-  # Output file for logging purposes
-  log_file=nohup_perm_fixer_$UNAME.out
-  touch "$log_file"
-  chmod g+w "$log_file"
-
-  date --iso-8601=seconds | tee -a "$log_file"
-  echo "Operating in directory: $(pwd)" | tee -a "$log_file"
+  echo ""
+  date --iso-8601=seconds
+  echo "Operating in directory: $(pwd)"
 
   # Recursively or non-recursively find and process files
-  echo "Changing group and permissions $([[ "$recurse" == "-R" ]] && echo "recursively" || echo "non-recursively")" | tee -a "$log_file"
+  echo "Changing group and permissions $([[ "$recurse" == "-R" ]] && echo "recursively" || echo "non-recursively")"
 
   echo "Finding files owned by user=$UNAME and group=$target_group that does not have group 'w' permissions."
 
   files=$(find_files $UNAME $target_group "$recurse")
-  process_files "$files" "true" "$log_file" # Update permissions for found files
+  process_files "$files" "true" # Update permissions for found files
 
-  echo "Permission fix completed. Updated $found files/folders out of $total. Output logged to $log_file" | tee -a "$log_file"
-  echo "" | tee -a "$log_file"
-  echo "" | tee -a "$log_file"
+  echo "Permission fix completed."
+  echo ""
+  echo ""
 }
 
 run_permission_fixer_interrupt() {
@@ -173,21 +167,21 @@ run_permission_fixer_interrupt() {
   touch "$log_file"
   chmod g+w "$log_file"
 
-  date --iso-8601=seconds | tee -a "$log_file"
-  echo "Operating in directory: $(pwd)" | tee -a "$log_file"
+  date --iso-8601=seconds
+  echo "Operating in directory: $(pwd)"
 
   # Log the permission change for nohup output
-  echo "Changing permissions of $log_file" | tee -a "$log_file"
+  echo "Changing permissions of $log_file"
   chmod g+rw "$log_file"
 
   # Group and permissions update for the file
-  echo "Changing group and permissions of nohup_perm_fixer file" | tee -a "$log_file"
+  echo "Changing group and permissions of nohup_perm_fixer file"
 
   # Process the file
   files=$(lfs find "$log_file" -user "$USER" -group "$target_group" -type f)
   process_files "$files" "true"
 
-  echo "Permission fix completed. Output logged to $log_file" | tee -a "$log_file"
+  echo "Permission fix completed. Output logged to $log_file"
 }
 
 
@@ -198,23 +192,17 @@ count_permission_files() {
   local recurse=${3:--R}  # Default to recursive if no argument is provided
 
   # Ensure we're operating on the current working directory
+  echo ""
+  date --iso-8601=seconds
   echo "Operating in directory: $(pwd)"
-
-  # Output file for logging purposes
-  log_file=nohup_perm_counter_$UNAME.out
-  touch "$log_file"
-  chmod g+w "$log_file"
-
-  date --iso-8601=seconds | tee -a "$log_file"
-  echo "Operating in directory: $(pwd)" | tee -a "$log_file"
 
   # Find files based on the recursion flag
   files=$(find_files $UNAME "$target_group" "$recurse")
-  process_files "$files" "false" "$log_file"  # Only count, without changing permissions
+  process_files "$files" "false"  # Only count, without changing permissions
 
-  echo "Total files counted. Output logged to $log_file" | tee -a "$log_file"
-  echo "" | tee -a "$log_file"
-  echo "" | tee -a "$log_file"
+  echo "Counting complete."
+  echo ""
+  echo ""
 }
 
 count_all(){
