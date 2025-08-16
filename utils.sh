@@ -76,12 +76,12 @@ find_files() {
   if [[ "$recurse" == "-R" ]]; then 
     # Recursively find files and directories
     #                     with -print0 for null-terminated output
-    (lfs find . -user "$USER" -group "$target_group" -type d ; \
-     lfs find . -user "$USER" -group "$target_group" -type f)
+    (lfs find . -user "$UNAME" -group "$target_group" -type d ; \
+     lfs find . -user "$UNAME" -group "$target_group" -type f)
   else
     # Non-recursively find files and directories (maxdepth 1)
-    (lfs find . -maxdepth 1 -user "$USER" -group "$target_group" -type d ; \
-     lfs find . -maxdepth 1 -user "$USER" -group "$target_group" -type f)
+    (lfs find . -maxdepth 1 -user "$UNAME" -group "$target_group" -type d ; \
+     lfs find . -maxdepth 1 -user "$UNAME" -group "$target_group" -type f)
   fi
 }
 
@@ -146,7 +146,7 @@ run_permission_fixer() {
   # Recursively or non-recursively find and process files
   echo "Changing group and permissions $([[ "$recurse" == "-R" ]] && echo "recursively" || echo "non-recursively")"
 
-  echo "Finding files owned by user=$UNAME and group=$target_group that does not have group 'w' permissions."
+  echo "Finding files owned by user=$UNAME and group=$target_group that does not have group 'w' permissions, with recursion=$recurse."
 
   files=$(find_files $UNAME $target_group "$recurse")
   process_files "$files" "true" # Update permissions for found files
@@ -195,6 +195,8 @@ count_permission_files() {
   echo ""
   date --iso-8601=seconds
   echo "Operating in directory: $(pwd)"
+  
+  echo "Finding files owned by user=$UNAME and group=$target_group that does not have group 'w' permissions, with recursion=$recurse."
 
   # Find files based on the recursion flag
   files=$(find_files $UNAME "$target_group" "$recurse")
