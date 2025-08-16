@@ -67,8 +67,64 @@ progress(){
 
 # progress "output/folder" "logs/folder"
 
+# Reusable function to find files and directories
+find_files() {
+  local UNAME=${1:-$USER}
+  local target_group=${2:-$(stat -c "%G" .)} # group of pwd
+  local recurse=$3
+
+  if [[ "$recurse" == "-R" ]]; then 
+    # Recursively find files and directories
+    #     with -print0 for null-terminated output
+    (lfs find . -user "$USER" -group "$target_group" -type d ; \
+     lfs find . -user "$USER" -group "$target_group" -type f)
+  else
+    # Non-recursively find files and directories (maxdepth 1)
+    (lfs find . -maxdepth 1 -user "$USER" -group "$target_group" -type d ; \
+     lfs find . -maxdepth 1 -user "$USER" -group "$target_group" -type f)
+  fi
+}
+
+# Reusable function to process files and update permissions or count
+process_files() {
+  local files=$1
+  local change=$2
+  local log_file=$3
+  found=0
+  total=0
+
+  # Output either "Changing permissions" or "Only counting" based on change flag
+  [[ "$change" == "true" ]] && echo "Changing permissions." || echo "Not changing permission, only counting."
+
+  # Process each file
+  # while IFS= read -r -d '' file; do # null terminated strings
+  while read -r file; do # new line teminated strings
+    ((total++))
+    perm=$(stat -c "%a" "$file")  # Get octal permissions
+    group_perm=$(( (perm / 10) % 10 ))  # Extract the second digit (group permission)
+
+    # Check if the group has write permission
+    if [ $group_perm -lt 6 ]; then
+        # 2750: Group is sticky 'drwxr-s---'
+        # 660: Group has read and write permission. 'drwxrw----'
+        # 644: Group has only read permission. 'drwxr--r--'
+
+      echo "$perm, $group_perm: $file" | tee -a "$log_file"
+      if [[ "$change" == "true" ]]; then
+        chmod g+rw "$file" | tee -a "$log_file"
+        # Uncomment the line below to change the group as well
+        # chgrp "$target_group" "$file"
+      fi
+      ((found++))
+    fi
+  done <<< "$files"  # Here, we pass the files directly to the loop
+
+  # Return the count of files processed
+  echo "$found files updated out of $total processed." | tee -a "$log_file"
+}
+
 run_permission_fixer() {
-  # Usage:
+  # Usage
   # Args:
   #   1: group name. The default is the group owner of the pwd (.), `stat -c "%G"``
   #   2: '-R' for recusion. Any other value will only update the `log file` 'nohup_perm_fixer_$USER.out' 
@@ -80,66 +136,26 @@ run_permission_fixer() {
 
   target_group=$1 # ${2:-$(stat -c "%G" .)} # group of pwd
   recurse=${2:--1}
-  
+  UNAME=$USER
+
   # Ensure we're operating on the current working directory
   echo "Operating in directory: $(pwd)"
   
   # Output file for logging purposes
-  log_file=nohup_perm_fixer_$USER.out
+  log_file=nohup_perm_fixer_$UNAME.out
   touch "$log_file"
   chmod g+w "$log_file"
 
   date --iso-8601=seconds | tee -a "$log_file"
   echo "Operating in directory: $(pwd)" | tee -a "$log_file"
-  found=0
-  total=0
-
-  # Function to process files and update permissions
-  process_files() {
-    local files
-    files=$1
-    change=$2
-    
-    [[ "$change" == "true" ]] && echo "Changing permissions." || echo "Only counting."
-
-    echo "$files" | while read -r file; do
-      ((total++))
-      perm=$(stat -c "%a" "$file")  # Get octal permissions
-      group_perm=$(( (perm / 10) % 10 ))  # Extract the second digit (group permission)
-
-      # Check if the group has write permission
-      if [ $group_perm -lt 6 ]; then
-        echo "Updating permissions ($group_perm) for $file"
-        echo "$perm, $group_perm: $file" | tee -a "$log_file"
-        chmod g+rw "$file" | tee -a "$log_file"
-        # chgrp "$target_group" "$file"  # Uncomment if you need to change the group
-        ((found++))
-      fi
-    done
-  }
-
-  # Function to find files and directories
-  find_files() {
-    local search_depth
-    search_depth=$1
-
-    # Find files and directories based on recursion flag
-    if [[ "$search_depth" == "-R" ]]; then
-      (lfs find . -user "$USER" -group "$target_group" -type d ; \
-       lfs find . -user "$USER" -group "$target_group" -type f)
-    else
-      (lfs find . -maxdepth 1 -user "$USER" -group "$target_group" -type d ; \
-       lfs find . -maxdepth 1 -user "$USER" -group "$target_group" -type f)
-    fi
-  }
 
   # Recursively or non-recursively find and process files
   echo "Changing group and permissions $([[ "$recurse" == "-R" ]] && echo "recursively" || echo "non-recursively")" | tee -a "$log_file"
 
-  echo "Counting files owned by user=$UNAME and group=$target_group that does not have group 'w' permissions."
+  echo "Finding files owned by user=$UNAME and group=$target_group that does not have group 'w' permissions."
 
-  files=$(find_files "$recurse")
-  process_files "$files" "true"
+  files=$(find_files $UNAME $target_group "$recurse")
+  process_files "$files" "true" "$log_file" # Update permissions for found files
 
   echo "Permission fix completed. Updated $found files/folders out of $total. Output logged to $log_file" | tee -a "$log_file"
   echo "" | tee -a "$log_file"
@@ -175,41 +191,28 @@ run_permission_fixer_interrupt() {
 }
 
 
-count_permission_files(){
-  UNAME=${1:-$USER}
-  target_group=${2:-$(stat -c "%G" .)} # group of pwd
+# Function to count files without changing permissions (with reuse of find_files and process_files)
+count_permission_files() {
+  local UNAME=${1:-$USER}
+  local target_group=${2:-$(stat -c "%G" .)} # group of pwd
+  local recurse=${3:--R}  # Default to recursive if no argument is provided
 
-  log_file=nohup_perm_counter_$USER.out
+  # Ensure we're operating on the current working directory
+  echo "Operating in directory: $(pwd)"
+
+  # Output file for logging purposes
+  log_file=nohup_perm_counter_$UNAME.out
   touch "$log_file"
   chmod g+w "$log_file"
 
-  echo "Counting files owned by user=$UNAME and group=$target_group that does not have group 'w' permissions."
-  # lfs find . -user "$UNAME" -type f | while read -r file; do
-  # lfs find . -user "$UNAME" -group "$target_group" -type f -type d \ 
-  found=0
-  total=0
+  date --iso-8601=seconds | tee -a "$log_file"
+  echo "Operating in directory: $(pwd)" | tee -a "$log_file"
 
-  (lfs find . -user "$USER" -group "$target_group" -type d ; \
-    lfs find . -user "$USER" -group "$target_group" -type f) \
-    | while read -r file; do
-      ((total++))
-      perm=$(stat -c "%a" "$file") # returs 3 digits with octal permissions
-      # Extract the second digit (group permission) from the octal permissions
-      group_perm=$(( (perm / 10) % 10 ))
-      
-      # Check if the group has write permission
-      if [ $group_perm -lt 6 ]; then
-        # If the numeric permission is less than 6, the group does not have write permission
-        # 2750: Group is sticky 'drwxr-s---'
-        # 660: Group has read and write permission. 'drwxrw----'
-        # 654: Group has only read permission. 'drwxr-xr--'
-        # 644: Group has only read permission. 'drwxr--r--'
-        echo "$perm, $group_perm: $file" | tee -a $log_file
-        ((found++))
-      fi
-    done | tee -a $log_file
-  echo "Total files and folders found are $found / $total." | tee -a $log_file
+  # Find files based on the recursion flag
+  files=$(find_files $UNAME "$target_group" "$recurse")
+  process_files "$files" "false" "$log_file"  # Only count, without changing permissions
 
+  echo "Total files counted. Output logged to $log_file" | tee -a "$log_file"
   echo "" | tee -a "$log_file"
   echo "" | tee -a "$log_file"
 }
