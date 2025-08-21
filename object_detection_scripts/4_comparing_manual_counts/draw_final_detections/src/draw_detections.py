@@ -409,7 +409,7 @@ def get_font() -> ImageFont:
 
 def main(rescale_factor=4):
     if detections_file is not None:
-        detections = pd.read_csv(detections_file)
+        detections = pd.read_csv(detections_file, index_col=0)
         detections = detections.reset_index() # ensure RangeIndex is converted to list index to produce IDs
         
         assert detections['detection_classes'].hasnans == False, f'detections_file={detections_file} must not contain null classes' + '\n' + 'use output of post_process_detections'
